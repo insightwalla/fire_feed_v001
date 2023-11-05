@@ -570,6 +570,7 @@ def main():
 
     elif menu == 'AI Assistant':
         st.info('Coming Soon')
+        st.stop()
 
 if __name__ == '__main__':
     from login_light import login
