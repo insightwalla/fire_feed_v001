@@ -128,18 +128,19 @@ def main():
 
     def adding_data():
         uploaded_files = st.file_uploader("Upload Excel", type="xlsx", accept_multiple_files=True, key='upload')
-        space_for_button_upload = st.empty()
-        if uploaded_files != []:
-            # read the data
-            tabs = st.tabs([str(u.name) for u in uploaded_files])
-            for i, tab in enumerate(tabs):
-                with tab:
-                    df = pd.read_excel(uploaded_files[i])
-                    st.write(df)
-
-
-
         with st.form(key='my_transforming_form'):
+
+            space_for_button_upload = st.empty()
+            if uploaded_files != []:
+                # read the data
+                tabs = st.tabs([str(u.name) for u in uploaded_files])
+                for i, tab in enumerate(tabs):
+                    with tab:
+                        df = pd.read_excel(uploaded_files[i])
+                        st.write(df)
+
+
+
             if uploaded_files != []:
                 how_many = len(uploaded_files)
                 if how_many!= 1:
