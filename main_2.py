@@ -238,137 +238,160 @@ def main():
         data = [doc for doc in data if doc['idx'] == review_id][0]
         review = data
         #st.write(review)
-        with st.form(key='my_editing_form', clear_on_submit=False):
-            _, space_for_update_button = st.columns([0.7,0.3])
-            # get all the informations
-            best_rev = df_full[df_full['👍'] == '1']
-            worst_rev = df_full[df_full['👎'] == '1']
-            suggestions_rev = df_full[df_full['💡'] == '1']
-            is_this_best = review['👍'] == '1'
-            is_this_worst = review['👎'] == '1'
-            is_this_suggestion = review['💡'] == '1'
-            col_best, col_worst, col_sugg = st.columns(3)
-            if len(best_rev) == 3 and not is_this_best:
-               is_best = False
-               col_best.info('Already selected 3 👍')
-            else:
-               is_best = col_best.toggle('👍',review['👍'] == '1', key = f'is_good{review_id}={venue}')
-
-            if len(worst_rev) == 3 and not is_this_worst:
-               is_worst = False
-               col_worst.info('Already selected 3 👎')
-            else:
-               is_worst = col_worst.toggle('👎',review['👎'] == '1', key= f'is_bad{review_id}={venue}')
-
-            if len(suggestions_rev) == 3 and not is_this_suggestion:
-               is_suggestion = False
-               col_sugg.write('Already selected 3 💡')
-            else:
-               is_suggestion = col_sugg.toggle('💡',review['💡'] == '1', key= f'is_suggestion{review_id}={venue}')
-
-            # edit the review   
-            def clean_column_entries(review, col_name):
-               '''
-               This function will clean the column entries
-               example:
-               'Menu_Item': 'Chicken Ruby - House Black Daal - Dishoom Calamaris'
-
-               will become:
-               ['Chicken Ruby', 'House Black Daal', 'Dishoom Calamari']
-               '''
-               col_values = review[col_name]
-               col_values = col_values.split('-') if '-' in col_values else [col_values]
-               col_values = [l.strip() for l in col_values if l != '']
-               return col_values
-            
-            def clean_rating_number(rating_n):
-                if type(rating_n) == str:
-                    if rating_n == 'nan':
-                        return 5
-                    else:
-                        if '.0' in rating_n:
-                            return int(rating_n.split('.')[0])
-                        else:
-                            return int(rating_n)
-                if type(rating_n) == float:
-                    return int(rating_n)
+        edit_tab, venue_tab = st.tabs([f'Edit {index}/{len(df_full)}', 'Venue Details'])
+        with edit_tab:
+            with st.form(key='my_editing_form', clear_on_submit=False):
+                _, space_for_update_button = st.columns([0.7,0.3])
+                # get all the informations
+                best_rev = df_full[df_full['👍'] == '1']
+                worst_rev = df_full[df_full['👎'] == '1']
+                suggestions_rev = df_full[df_full['💡'] == '1']
+                is_this_best = review['👍'] == '1'
+                is_this_worst = review['👎'] == '1'
+                is_this_suggestion = review['💡'] == '1'
+                col_best, col_worst, col_sugg = st.columns(3)
+                if len(best_rev) == 3 and not is_this_best:
+                is_best = False
+                col_best.info('Already selected 3 👍')
                 else:
-                    return rating_n
+                is_best = col_best.toggle('👍',review['👍'] == '1', key = f'is_good{review_id}={venue}')
+
+                if len(worst_rev) == 3 and not is_this_worst:
+                is_worst = False
+                col_worst.info('Already selected 3 👎')
+                else:
+                is_worst = col_worst.toggle('👎',review['👎'] == '1', key= f'is_bad{review_id}={venue}')
+
+                if len(suggestions_rev) == 3 and not is_this_suggestion:
+                is_suggestion = False
+                col_sugg.write('Already selected 3 💡')
+                else:
+                is_suggestion = col_sugg.toggle('💡',review['💡'] == '1', key= f'is_suggestion{review_id}={venue}')
+
+                # edit the review   
+                def clean_column_entries(review, col_name):
+                '''
+                This function will clean the column entries
+                example:
+                'Menu_Item': 'Chicken Ruby - House Black Daal - Dishoom Calamaris'
+
+                will become:
+                ['Chicken Ruby', 'House Black Daal', 'Dishoom Calamari']
+                '''
+                col_values = review[col_name]
+                col_values = col_values.split('-') if '-' in col_values else [col_values]
+                col_values = [l.strip() for l in col_values if l != '']
+                return col_values
                 
-            c1,c2,c3,c4,c5 = st.columns(5)
-            st.markdown('**Review**')
-            st.markdown(review['Details'])
+                def clean_rating_number(rating_n):
+                    if type(rating_n) == str:
+                        if rating_n == 'nan':
+                            return 5
+                        else:
+                            if '.0' in rating_n:
+                                return int(rating_n.split('.')[0])
+                            else:
+                                return int(rating_n)
+                    if type(rating_n) == float:
+                        return int(rating_n)
+                    else:
+                        return rating_n
+                    
+                c1,c2,c3,c4,c5 = st.columns(5)
+                st.markdown('**Review**')
+                st.markdown(review['Details'])
 
-            with c1:
-                overall = sac.rate(label=f'Overall Rating: **{review["Overall_Rating"]}**',
-                                    value=int(review['New_Overall_Rating']),
-                                    count=value_map[clean_rating_number(review['Overall_Rating'])],
-                                    key=f'{review["idx"]}_overall')
-            with c2:
-                food = sac.rate(label=f'Food Rating: **{review["Feedback_Food_Rating"]}**',
-                                value=int(review['New_Food_Rating']),
-                                count=value_map[clean_rating_number(review['Feedback_Food_Rating'])],
-                                key=f'{review["idx"]}_food')
-            with c3:
-                drink = sac.rate(label=f'Drink Rating: **{review["Feedback_Drink_Rating"]}**',
-                                value=int(review['New_Drink_Rating']),
-                                count=value_map[clean_rating_number(review['Feedback_Drink_Rating'])],
-                                key=f'{review["idx"]}_drink')
-            with c4:
-                service = sac.rate(label=f'Service Rating: **{review["Feedback_Service_Rating"]}**',
-                                    value=int(review['New_Service_Rating']),
-                                    count=value_map[clean_rating_number(review['Feedback_Service_Rating'])],
-                                    key=f'{review["idx"]}_service')
-            with c5:
-                ambience = sac.rate(label=f'Ambience Rating: **{review["Feedback_Ambience_Rating"]}**',
-                                    value=int(review['New_Ambience_Rating']),
-                                    count=value_map[clean_rating_number(review['Feedback_Ambience_Rating'])],
-                                    key = f'{review["idx"]}_ambience')
+                with c1:
+                    overall = sac.rate(label=f'Overall Rating: **{review["Overall_Rating"]}**',
+                                        value=int(review['New_Overall_Rating']),
+                                        count=value_map[clean_rating_number(review['Overall_Rating'])],
+                                        key=f'{review["idx"]}_overall')
+                with c2:
+                    food = sac.rate(label=f'Food Rating: **{review["Feedback_Food_Rating"]}**',
+                                    value=int(review['New_Food_Rating']),
+                                    count=value_map[clean_rating_number(review['Feedback_Food_Rating'])],
+                                    key=f'{review["idx"]}_food')
+                with c3:
+                    drink = sac.rate(label=f'Drink Rating: **{review["Feedback_Drink_Rating"]}**',
+                                    value=int(review['New_Drink_Rating']),
+                                    count=value_map[clean_rating_number(review['Feedback_Drink_Rating'])],
+                                    key=f'{review["idx"]}_drink')
+                with c4:
+                    service = sac.rate(label=f'Service Rating: **{review["Feedback_Service_Rating"]}**',
+                                        value=int(review['New_Service_Rating']),
+                                        count=value_map[clean_rating_number(review['Feedback_Service_Rating'])],
+                                        key=f'{review["idx"]}_service')
+                with c5:
+                    ambience = sac.rate(label=f'Ambience Rating: **{review["Feedback_Ambience_Rating"]}**',
+                                        value=int(review['New_Ambience_Rating']),
+                                        count=value_map[clean_rating_number(review['Feedback_Ambience_Rating'])],
+                                        key = f'{review["idx"]}_ambience')
+                
+                col1,col2 = st.columns(2)
+                new_food_items = col1.multiselect('Menu Items', 
+                                                default=clean_column_entries(review, 'Menu_Item'), 
+                                                options=menu_items_lookup,
+                                                key=f'{review["idx"]}_menu_items')
+                new_drinks_items = col2.multiselect('Drinks Items', 
+                                                default=clean_column_entries(review, 'Drink_Item'), 
+                                                options=drink_items_lookup,
+                                                key=f'{review["idx"]}_drink_items')
+                new_keywords = st.multiselect('Keywords', 
+                                            default=clean_column_entries(review, 'Label_Dishoom'), 
+                                            options=options_for_classification,
+                                                key=f'{review["idx"]}_keywords')
+                # now make it as a string - join
+                new_food_items = ' - '.join(new_food_items)
+                new_drinks_items = ' - '.join(new_drinks_items)
+                new_keywords = ' - '.join(new_keywords)
+                data = {
+                        'New_Overall_Rating': str(overall),
+                        'New_Food_Rating': str(food),
+                        'New_Drink_Rating': str(drink),
+                        'New_Service_Rating': str(service),
+                        'New_Ambience_Rating': str(ambience),
+                        'Reservation_Venue': str(venue),
+                        'Menu_Item': new_food_items,
+                        'Drink_Item': new_drinks_items,
+                        'Label_Dishoom': new_keywords,
+                        '👍': '1' if is_best else '0',
+                        '👎': '1' if is_worst else '0',
+                        '💡': '1' if is_suggestion else '0',
+                        }
+                
+                if space_for_update_button.form_submit_button('Edit', type ='primary', use_container_width=True):
+                    modify_entry(collection_name, review_id, data)
+                    st.success('Data edited')
+                    # check if you still need labels
+                    # get how many non labelled and negative
+                    df_to_label = df_full[df_full['Label_Dishoom'] == '']
+                    df_to_label = df_to_label[df_to_label['Sentiment'] == 'NEGATIVE']
+                    if len(df_to_label) == 0 and only_to_label:
+                        st.balloons()
+                        st.stop()
+                    else:
+                        pass
+
+        with venue_tab:
+            venue_map = {
+               'Dishoom Covent Garden': 1,
+               'Dishoom Shoreditch': 2,
+               'Dishoom Kings Cross': 3,
+               'Dishoom Carnaby': 4,
+               'Dishoom Edinburgh': 5,
+               'Dishoom Kensington': 6,
+               'Dishoom Manchester': 7,
+               'Dishoom Birmingham': 8,
+               'Dishoom Canary Wharf': 9
+            }
             
-            col1,col2 = st.columns(2)
-            new_food_items = col1.multiselect('Menu Items', 
-                                            default=clean_column_entries(review, 'Menu_Item'), 
-                                            options=menu_items_lookup,
-                                            key=f'{review["idx"]}_menu_items')
-            new_drinks_items = col2.multiselect('Drinks Items', 
-                                              default=clean_column_entries(review, 'Drink_Item'), 
-                                              options=drink_items_lookup,
-                                              key=f'{review["idx"]}_drink_items')
-            new_keywords = st.multiselect('Keywords', 
-                                          default=clean_column_entries(review, 'Label_Dishoom'), 
-                                          options=options_for_classification,
-                                            key=f'{review["idx"]}_keywords')
-            # now make it as a string - join
-            new_food_items = ' - '.join(new_food_items)
-            new_drinks_items = ' - '.join(new_drinks_items)
-            new_keywords = ' - '.join(new_keywords)
-            data = {
-                    'New_Overall_Rating': str(overall),
-                    'New_Food_Rating': str(food),
-                    'New_Drink_Rating': str(drink),
-                    'New_Service_Rating': str(service),
-                    'New_Ambience_Rating': str(ambience),
-                    'Reservation_Venue': str(venue),
-                    'Menu_Item': new_food_items,
-                    'Drink_Item': new_drinks_items,
-                    'Label_Dishoom': new_keywords,
-                    '👍': '1' if is_best else '0',
-                    '👎': '1' if is_worst else '0',
-                    '💡': '1' if is_suggestion else '0',
-                    }
-            
-            if space_for_update_button.form_submit_button('Edit', type ='primary', use_container_width=True):
-                modify_entry(collection_name, review_id, data)
-                st.success('Data edited')
-                # check if you still need labels
-                # get how many non labelled and negative
-                df_to_label = df_full[df_full['Label_Dishoom'] == '']
-                df_to_label = df_to_label[df_to_label['Sentiment'] == 'NEGATIVE']
-                if len(df_to_label) == 0 and only_to_label:
-                    st.balloons()
-                    st.stop()
-                else:
-                    pass
+            # get the id from the name
+            store_id = venue_map[venue]
+            date = review['Reservation_Date']
+            time = review['Reservation_Time']
+            get_sales_date(store_id= [store_id], date = date, time = time)
+            st.stop()
+        
 
     def clear_data():
         with st.form(key='my_clearing_form'):
