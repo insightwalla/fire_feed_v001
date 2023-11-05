@@ -596,7 +596,7 @@ def main():
       )
       st.write(f'{len(df)} Reviews')
       st.write(df)
-      self.plot(df)
+      plot(df)
 
       st.stop()
 
