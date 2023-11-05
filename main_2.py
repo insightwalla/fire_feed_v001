@@ -128,7 +128,7 @@ def main():
 
     def adding_data():
         uploaded_files = st.file_uploader("Upload Excel", type="xlsx", accept_multiple_files=True, key='upload')
-
+        space_for_button_upload = st.empty()
         if uploaded_files != []:
             # read the data
             tabs = st.tabs([str(u.name) for u in uploaded_files])
@@ -168,7 +168,7 @@ def main():
                     data = get_data(collection_name)
     
                     unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
-                    if st.form_submit_button(f'Add the data'):
+                    if space_for_button_upload.form_submit_button(f'Add the data', use_container_width =True, type = 'primary'):
                         if name in unique_venues:
                             with st.spinner('Clearing data...'):
                                 clear_collection_venue(collection_name, name)
