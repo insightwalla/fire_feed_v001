@@ -182,7 +182,7 @@ def main():
                                 add_data(collection_name, row.to_dict())
                                 my_small_bar.progress((i+1)/len_df, text=f'Uploading {i+1}/{len_df}')
                                 if how_many!= 1:
-                                    my_big_bar.progress((e+1)/len(df), text=f'Uploading {e+1}/{how_many}')
+                                    my_big_bar.progress((e+1)/how_many, text=f'Uploading {e+1}/{how_many}')
                             my_small_bar.progress(100, text=f'Upload Completed')
                             st.balloons()
     
