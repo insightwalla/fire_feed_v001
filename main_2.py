@@ -568,6 +568,9 @@ def main():
     elif menu == 'Reporting':
         reporting()
 
+    elif menu == 'AI Assistant':
+        st.info('Coming Soon')
+
 if __name__ == '__main__':
     from login_light import login
     login(render_func=main)
