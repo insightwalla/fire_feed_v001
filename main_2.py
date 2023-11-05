@@ -556,6 +556,50 @@ def main():
 
       st.markdown(get_table_download_link(data), unsafe_allow_html=True)
 
+    def download():
+      c1,c2,c3 = st.columns([0.3,0.5, 0.2])
+
+      c1.subheader('Download')
+      data = get_data(collection_name, as_dict=True)
+      df = pd.DataFrame(data)
+      if len(df) == 0:  
+         st.info('No data found - Please select Upload to upload the data')
+         st.stop()
+      df = df.sort_values(by=['idx'])
+      all_venues = df['Reservation_Venue'].unique().tolist()
+      all_venues =  ['All'] + all_venues
+      
+      if len(df) == 0:  
+         st.info('No data found - Please select Upload to upload the data')
+         st.stop()
+      df = df.sort_values(by=['idx'])
+      
+      venue = st.selectbox('Select the Venue', options = all_venues, index = 0)
+      if venue != 'All':
+         df = df[df['Reservation_Venue'] == venue]
+      
+      name_file = c2.text_input('File Name', value ='labelled_reviews' if venue == 'All' else f'labelled_rev_{venue}')
+      
+      @st.cache_data
+      def convert_df(df):
+         # IMPORTANT: Cache the conversion to prevent computation on every rerun
+         return df.to_csv().encode('utf-8')
+
+      csv = convert_df(df)
+
+      c3.download_button(
+         label="Download data as CSV",
+         data=csv,
+         file_name=name_file,
+         mime='text/csv',
+         type = 'primary'
+      )
+      st.write(f'{len(df)} Reviews')
+      st.write(df)
+      self.plot(df)
+
+      st.stop()
+
     menu = create_sidebar_menu()
     if menu == 'Upload':
         adding_data()
@@ -572,7 +616,8 @@ def main():
     elif menu == 'AI Assistant':
         st.info('Coming Soon')
         st.stop()
-
+    elif menu == 'Download':
+        download()
 if __name__ == '__main__':
     from login_light import login
     login(render_func=main)
