@@ -176,10 +176,15 @@ if __name__ == '__main__':
                                 clear_collection_venue(collection_name, name)
 
                         with st.spinner('Adding data...'):
+                            # get totla number of rows
+                            len_df = len(df)
+                            my_small_bar = st.progress(0, text=f'Uploading 0/{len_df}')
                             for i, row in df.iterrows():
                                 add_data(collection_name, row.to_dict())
+                                my_small_bar.progress((i+1)/len_df, text=f'Uploading {i+1}/{len_df}')
                                 if how_many!= 1:
                                     my_big_bar.progress((i+1)/len(df), text=f'Uploading {i+1}/{how_many}')
+                            my_small_bar.progress(100, text=f'Upload Completed')
                             st.success('Data added')
     
     def edit_data():
