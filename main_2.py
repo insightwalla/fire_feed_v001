@@ -395,8 +395,8 @@ def main():
             st.subheader('Clear data')
             # clear all data
             if st.form_submit_button('Clear all'):
-                with st.spinner('Deleting All...')
-                clear_all_collection(collection_name)
+                with st.spinner('Deleting All...'):
+                    clear_all_collection(collection_name)
                 st.success('All data cleared')
     
     def create_sidebar_menu():
