@@ -238,7 +238,7 @@ def main():
         data = [doc for doc in data if doc['idx'] == review_id][0]
         review = data
         #st.write(review)
-        edit_tab, venue_tab = st.tabs([f'Edit {index}/{len(df_full)}', 'Venue Details']) 
+        edit_tab, venue_tab = st.tabs([f'Edit', 'Venue Details']) 
         with edit_tab.form(key='my_editing_form', clear_on_submit=False):
             _, space_for_update_button = st.columns([0.7,0.3])
             # get all the informations
