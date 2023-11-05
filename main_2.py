@@ -185,12 +185,12 @@ def main():
                             st.balloons()
     
     def edit_data():
-        with st.expander(f'session state - {len(st.session_state)}'):
-            st.write(st.session_state)
+        # with st.expander(f'session state - {len(st.session_state)}'):
+        #     st.write(st.session_state)
         #review_id = st.selectbox('Select ID', [doc['idx'] for doc in get_data(collection_name, as_dict=True)])
         data = get_data(collection_name, as_dict=True)
         if len(data) == 0:
-            st.write('No data available')
+            st.info('No data available, need to upload some reviews!')
             st.stop()        
         else:
             pass
@@ -202,7 +202,7 @@ def main():
         venue = c1.selectbox('Select venue', venues)
         data = [doc for doc in data if doc['Reservation_Venue'] == venue]
         if len(data) == 0:
-            st.write('No data available')
+            st.info('No data available, need to upload some reviews!')
             st.stop()
 
         # filter by empty label and negative
@@ -405,11 +405,11 @@ def main():
                   sac.MenuItem('Scoring', icon='brush'),
                   sac.MenuItem('Upload', icon='upload'), 
                   sac.MenuItem('Download', icon='download'),
-                  sac.MenuItem('Clear', icon='delete'),
+                  sac.MenuItem('Clear', icon='trash'),
                ]),
                sac.MenuItem('AI Assistant', icon='robot'),
                sac.MenuItem('Reporting', icon='share'),
-               sac.MenuItem('Settings', icon='gear'),
+               #sac.MenuItem('Settings', icon='gear'),
                   
          ], open_all=False)
          return menu
