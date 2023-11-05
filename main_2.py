@@ -139,8 +139,6 @@ def main():
 
 
         with st.form(key='my_transforming_form'):
-            space_for_button_upload = st.empty()
-
             if uploaded_files != []:
                 how_many = len(uploaded_files)
                 if how_many!= 1:
@@ -169,7 +167,7 @@ def main():
                     data = get_data(collection_name)
 
                     unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
-                    if space_for_button_upload.form_submit_button(f'Add the data', use_container_width =True, type = 'primary'):
+                    if st.form_submit_button(f'Add the data', use_container_width =True, type = 'primary'):
                         if name in unique_venues:
                             with st.spinner('Clearing data...'):
                                 clear_collection_venue(collection_name, name)
