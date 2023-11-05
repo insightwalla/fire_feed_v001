@@ -399,6 +399,7 @@ def main():
                 with st.spinner('Deleting All...'):
                     clear_all_collection(collection_name)
                 st.success('All data cleared')
+                st.balloons()
     
     def create_sidebar_menu():
       with st.sidebar:
