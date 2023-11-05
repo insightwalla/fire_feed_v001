@@ -392,7 +392,7 @@ def main():
             st.stop()
 
     def clear_data():
-        with st.form(key='my_clearing_form'):
+        with st.form(key='my_clearing_form', use_container_width = True, type = 'primary'):
             st.subheader('Clear data')
             # clear all data
             if st.form_submit_button('Clear all'):
