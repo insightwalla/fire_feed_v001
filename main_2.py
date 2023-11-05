@@ -183,7 +183,7 @@ def main():
                                 if how_many!= 1:
                                     my_big_bar.progress((i+1)/len(df), text=f'Uploading {i+1}/{how_many}')
                             my_small_bar.progress(100, text=f'Upload Completed')
-                            st.success('Data added')
+                            st.balloons()
     
     def edit_data():
         with st.expander(f'session state - {len(st.session_state)}'):
