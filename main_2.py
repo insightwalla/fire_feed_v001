@@ -100,7 +100,6 @@ def modify_entry(collection: str, id: str, data: dict):
     doc = [doc for doc in docs if doc.to_dict()['idx'] == id][0]
     doc.reference.update(data)
 
-
 def clear_agent_from_name(collection: str, name: str):
     '''
     params:
@@ -124,8 +123,7 @@ def clear_agent_from_name(collection: str, name: str):
         if doc.to_dict()['name'] == name:
             doc.reference.delete()
 
-if __name__ == '__main__':
-    
+def main():
     collection_name = 'conversations'
 
     def adding_data():
@@ -376,8 +374,7 @@ if __name__ == '__main__':
             st.subheader('Clear data')
             # clear all data
             if st.form_submit_button('Clear all'):
-                with st.spinner('Deleting...'):
-                    clear_all_collection(collection_name)
+                clear_all_collection(collection_name)
                 st.success('All data cleared')
     
     def create_sidebar_menu():
@@ -548,3 +545,7 @@ if __name__ == '__main__':
 
     elif menu == 'Reporting':
         reporting()
+
+if __name__ == '__main__':
+    from login_light import login
+    login(render_func=main)
