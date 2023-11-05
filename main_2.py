@@ -97,9 +97,9 @@ def modify_entry(collection: str, id: str, data: dict):
 
     '''
     docs = db.collection(collection).stream()
-    for doc in docs:
-        if doc.to_dict()['idx'] == id:
-            doc.reference.update(data)
+    doc = [doc for doc in docs if doc.to_dict()['idx'] == id][0]
+    doc.reference.update(data)
+
 
 def clear_agent_from_name(collection: str, name: str):
     '''
