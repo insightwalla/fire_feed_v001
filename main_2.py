@@ -357,7 +357,7 @@ def main():
                     '💡': '1' if is_suggestion else '0',
                     }
             
-            if space_for_update_button.form_submit_button('Edit', type ='primary'):
+            if space_for_update_button.form_submit_button('Edit', type ='primary', use_container_width=True)
                 modify_entry(collection_name, review_id, data)
                 st.success('Data edited')
                 # check if you still need labels
