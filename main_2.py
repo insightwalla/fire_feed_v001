@@ -395,7 +395,7 @@ def main():
         with st.form(key='my_clearing_form'):
             st.subheader('Clear data')
             # clear all data
-            if st.form_submit_button('Clear all', , use_container_width = True, type = 'primary'):
+            if st.form_submit_button('Clear all', use_container_width = True, type = 'primary'):
                 with st.spinner('Deleting All...'):
                     clear_all_collection(collection_name)
                 st.success('All data cleared')
