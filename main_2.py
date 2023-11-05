@@ -415,7 +415,15 @@ def main():
                #sac.MenuItem('Settings', icon='gear'),
                   
          ], open_all=False)
+         with st.expander('Rating Guide'):
+            st.write('**5** : **10**')
+            st.write('**4** : **8**')
+            st.write('**3** : **5**')
+            st.write('**2** : **1**')
+            st.write('**1** : **1**')
          return menu
+
+    
     
     def plot(df):
       final = df[df['Details'] != 'nan']
@@ -619,6 +627,7 @@ def main():
         st.stop()
     elif menu == 'Download':
         download()
+
 if __name__ == '__main__':
     from login_light import login
     login(render_func=main)
