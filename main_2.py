@@ -140,35 +140,36 @@ def main():
 
 
         with st.form(key='my_transforming_form'):
-            if uploaded_files != []:
-                how_many = len(uploaded_files)
-                if how_many!= 1:
-                    my_big_bar = st.progress(0, text=f'Uploading 0/{how_many}')
+            if st.form_submit_button(f'Add the data', use_container_width =True, type = 'primary'):
 
-                            
-                for i, file in enumerate(uploaded_files):
-                    # read the file
-                    df = pd.read_excel(file)
+                if uploaded_files != []:
+                    how_many = len(uploaded_files)
+                    if how_many!= 1:
+                        my_big_bar = st.progress(0, text=f'Uploading 0/{how_many}')
 
-                    names = df['Reservation: Venue'].unique().tolist()
-                    # take off nan
-                    names = [name for name in names if str(name) != 'nan']
-                    name = names[0]  
-                    df = preprocess_single_df(df)
-                    df['idx'] = [i for i in range(len(df))]
-                    df = process_data(df)
-                    df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
+                                
+                    for i, file in enumerate(uploaded_files):
+                        # read the file
+                        df = pd.read_excel(file)
 
-                    # transform all in strings
-                    for col in df.columns.tolist():
-                        df[col] = df[col].astype(str)
+                        names = df['Reservation: Venue'].unique().tolist()
+                        # take off nan
+                        names = [name for name in names if str(name) != 'nan']
+                        name = names[0]  
+                        df = preprocess_single_df(df)
+                        df['idx'] = [i for i in range(len(df))]
+                        df = process_data(df)
+                        df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
 
-                    # check if the doc exists
-                    # get all reviews from db with the same name
-                    data = get_data(collection_name)
+                        # transform all in strings
+                        for col in df.columns.tolist():
+                            df[col] = df[col].astype(str)
 
-                    unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
-                    if st.form_submit_button(f'Add the data', use_container_width =True, type = 'primary'):
+                        # check if the doc exists
+                        # get all reviews from db with the same name
+                        data = get_data(collection_name)
+
+                        unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
                         if name in unique_venues:
                             with st.spinner('Clearing data...'):
                                 clear_collection_venue(collection_name, name)
