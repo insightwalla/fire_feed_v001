@@ -344,7 +344,6 @@ if __name__ == '__main__':
                     'New_Drink_Rating': str(drink),
                     'New_Service_Rating': str(service),
                     'New_Ambience_Rating': str(ambience),
-                    'idx': str(review_id),
                     'Reservation_Venue': str(venue),
                     'Menu_Item': new_food_items,
                     'Drink_Item': new_drinks_items,
