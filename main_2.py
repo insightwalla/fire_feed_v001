@@ -239,6 +239,7 @@ def main():
         review = data
         #st.write(review)
         with st.form(key='my_editing_form', clear_on_submit=False):
+            _, space_for_update_button = st.columns([0.7,0.3])
             # get all the informations
             best_rev = df_full[df_full['👍'] == '1']
             worst_rev = df_full[df_full['👎'] == '1']
@@ -356,7 +357,7 @@ def main():
                     '💡': '1' if is_suggestion else '0',
                     }
             
-            if st.form_submit_button('Edit'):
+            if space_for_update_button.form_submit_button('Edit', type ='primary'):
                 modify_entry(collection_name, review_id, data)
                 st.success('Data edited')
                 # check if you still need labels
