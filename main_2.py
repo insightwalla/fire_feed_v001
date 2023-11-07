@@ -287,7 +287,7 @@ def main():
                 pass
         
         # add a search bar
-        search = st.text_input('Search', key='search')
+        search = st.text_input('Search', key='search', placeholder='Search for a word in the review')
         if search != '':
             data = [doc for doc in data if search.lower() in doc['Details'].lower()]
         
