@@ -172,7 +172,7 @@ def main():
          
         with st.form('query'):
             venues_list = list(venues.keys())
-            venue = c2.selectbox('Choose the venue', venues_list, index=len(venues_list)-1)
+            venue = c2.selectbox('Choose the venue', venues_list, index=0)
             query = f'''
             select
                *
@@ -182,7 +182,7 @@ def main():
                reservation_date >= '{start_date}'
                and reservation_date <= '{end_date}'
             '''
-            submit = st.form_submit_button(f'Prepare Data {venue} ({start_date}{end_date})', use_container_width=True, type='primary')
+            submit = st.form_submit_button(f'Prepare **{venue}** (**{start_date}** - **{end_date}**)', use_container_width=True, type='primary')
             if submit:
                data = GoogleBigQuery().query(query)
                if len(data) == 0:
