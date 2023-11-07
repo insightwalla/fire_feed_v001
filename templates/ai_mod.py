@@ -47,7 +47,6 @@ def ai_template(data):
 
             # Create embeddings and store in vectordb
             embeddings = OpenAIEmbeddings(
-                model_name=self.openai_model,
                 openai_api_key=self.openai_api_key
             )            
             vectordb = DocArrayInMemorySearch.from_texts(splits, embeddings)
