@@ -706,6 +706,9 @@ def main():
         # get data
         if 'data_for_ai' not in st.session_state:
             data = get_data(collection_name, as_dict=True)
+            if len(data) == 0:
+                st.info('Upload some data first!')
+                st.stop()
             df = pd.DataFrame(data)
             df = df[df['Details'] != '']
             df = df[df['Details'] != 'nan']
