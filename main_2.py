@@ -128,63 +128,128 @@ def main():
     collection_name = 'conversations'
 
     def adding_data():
-        uploaded_files = st.file_uploader("Upload Excel", type="xlsx", accept_multiple_files=True, key='upload')
-        if uploaded_files != []:
-            # read the data
-            tabs = st.tabs([str(u.name) for u in uploaded_files])
-            for i, tab in enumerate(tabs):
-                with tab:
-                    df = pd.read_excel(uploaded_files[i])
-                    st.write(df)
+        # create a list of week years from jan 2023
+        dates = pd.date_range(start='2022-12-01', end=pd.to_datetime('today').date(), freq='D')
+        dates = pd.DataFrame(dates, columns=['date'])
+        dates['week_year'] = dates['date'].apply(lambda x: 'W' + str(x.week) + 'Y' + str(x.year))
+        dates = dates.groupby('week_year').agg({'date': ['min', 'max']})
+        # sort by ascending date
+        dates = dates.sort_values(ascending=False, by=[('date', 'min')]) 
+        # now create a dict with the week year as key and the min and max date as value
+        week_year_dict = {}
+        for index, row in dates.iterrows():
+            week_year_dict[index] = {
+               'start_date': row['date']['min'].date(),
+               'end_date': row['date']['max'].date()
+            }
 
+        c1,c2 = st.columns(2)
+        # use it for the selectbox
+        week_years = list(week_year_dict.keys())
+        week_year = c1.selectbox('Choose the week year', week_years, index=len(week_years)-1)
+        start_date = week_year_dict[week_year]['start_date']
+        end_date = week_year_dict[week_year]['end_date']
 
+        st.write(start_date, end_date)
+        # as d/m/y
+        start_date = start_date.strftime('%m/%d/%Y')
+        end_date = end_date.strftime('%m/%d/%Y')
+        # select the venues
 
-        with st.form(key='my_transforming_form'):
-            if st.form_submit_button(f'Add the data', use_container_width =True, type = 'primary'):
+        venues = {
+            'Dishoom Covent Garden': '`jp-gs-379412.sevenrooms_covent_garden.reservation_feedback`' ,
+            'Dishoom Shoreditch': '`jp-gs-379412.sevenrooms_shoreditch.reservation_feedback`',
+            'Dishoom Kings Cross': '`jp-gs-379412.sevenrooms_kings_cross.reservation_feedback`',
+            'Dishoom Carnaby': '`jp-gs-379412.sevenrooms_carnaby.reservation_feedback`',
+            'Dishoom Edinburgh': '`jp-gs-379412.sevenrooms_edinburgh.reservation_feedback`',
+            'Dishoom Kensington': '`jp-gs-379412.sevenrooms_kensington.reservation_feedback`',
+            'Dishoom Manchester': '`jp-gs-379412.sevenrooms_manchester.reservation_feedback`',
+            'Dishoom Birmingham': '`jp-gs-379412.sevenrooms_birmingham.reservation_feedback`',
+            'Dishoom Canary Wharf': '`jp-gs-379412.sevenrooms_canary_wharf.reservation_feedback`',
+            'Dishoom Permit Room Brighton': '`jp-gs-379412.sevenrooms_permit_room_brighton.reservation_feedback`'
+         }
+         # use it to query the data
+         
+        with st.form('query'):
+            venues_list = list(venues.keys())
+            venue = c2.selectbox('Choose the venue', venues_list, index=len(venues_list)-1)
+            query = f'''
+            select
+               *
+            from
+               {venues[venue]}
+            where
+               reservation_date >= '{start_date}'
+               and reservation_date <= '{end_date}'
+            '''
+            submit = st.form_submit_button(f'Prepare Data {venue} ({start_date}{end_date})', use_container_width=True, type='primary')
+            if submit:
+               data = GoogleBigQuery().query(query)
+               if len(data) == 0:
+                    st.info('No data found for the selected dates')
+                    st.stop()
+               data = data.rename(columns={'venue': 'Reservation: Venue'})
+               data = data.rename(columns={'reservation_date': 'Reservation: Date'})
+               data['Date Submitted'] = data['Reservation: Date']
+               data['Reservation: Time'] = ''
+               data = data.rename(columns={'ambience': 'Feedback: Ambience Rating'})
+               data = data.rename(columns={'service': 'Feedback: Service Rating'})
+               data = data.rename(columns={'food': 'Feedback: Food Rating'})
+               data = data.rename(columns={'drinks': 'Feedback: Drink Rating'})
+               data = data.rename(columns={'overall': 'Overall Rating'})
+               data['Reservation: Overall Rating'] = data['Overall Rating']
+               data['Reservation: Food Rating'] = data['Feedback: Food Rating']
+               data['Reservation: Drinks Rating'] = data['Feedback: Drink Rating']
+               data['Reservation: Service Rating'] = data['Feedback: Service Rating']
+               data['Reservation: Ambience Rating'] = data['Feedback: Ambience Rating']
+               data['Reservation: Recommend to Friend'] = data['recommend_to_friend'].apply(lambda x: 'Yes' if x == 'True' else 'No')
+               data['Reservation: Feedback Notes'] = ''
+               data['Title'] = ''
+               data['Feedback: Recommend to Friend'] = data['recommend_to_friend'].apply(lambda x: 'Yes' if x == 'True' else 'No')
+               data['Reservation: Updated Date'] = ''
+               data = data.rename(columns={'notes': 'Details'})
+               # clean drink columns from "" symbols
+               # create a platform column
+               data['Platform'] = 'SevenRooms'
+               data = data.drop(columns=['order_id']    )
+               # need to edit the Feedback: Drink Rating column
+               # nan are ''
+               data = data.fillna('')
+               if 'Feedback: Drink Rating' in data.columns.tolist():
+                    data['Feedback: Drink Rating'] = data['Feedback: Drink Rating'].apply(lambda x: x.replace('"', ''))
+                    # if empty then 0
+                    data['Feedback: Drink Rating'] = data['Feedback: Drink Rating'].apply(lambda x: 0 if x == '' else x)
+               st.session_state.data = preprocess_single_df(data)
+               st.write(st.session_state.data)
 
-                if uploaded_files != []:
-                    how_many = len(uploaded_files)
-                    if how_many!= 1:
-                        my_big_bar = st.progress(0, text=f'Uploading 0/{how_many}')
+            if st.form_submit_button(f'Add the data', use_container_width =True, type = 'primary') and 'data' in st.session_state:
+                df = st.session_state.data
+                df['idx'] = [i for i in range(len(df))]
+                df = process_data(df)
+                df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
 
-                                
-                    for e, file in enumerate(uploaded_files):
-                        # read the file
-                        df = pd.read_excel(file)
+                # transform all in strings
+                for col in df.columns.tolist():
+                    df[col] = df[col].astype(str)
 
-                        names = df['Reservation: Venue'].unique().tolist()
-                        # take off nan
-                        names = [name for name in names if str(name) != 'nan']
-                        name = names[0]  
-                        df = preprocess_single_df(df)
-                        df['idx'] = [i for i in range(len(df))]
-                        df = process_data(df)
-                        df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
+                # check if the doc exists
+                # get all reviews from db with the same name
+                data = get_data(collection_name)
 
-                        # transform all in strings
-                        for col in df.columns.tolist():
-                            df[col] = df[col].astype(str)
+                unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
+                if venue in unique_venues:
+                    with st.spinner('Clearing data...'):
+                        clear_collection_venue(collection_name, venue)
 
-                        # check if the doc exists
-                        # get all reviews from db with the same name
-                        data = get_data(collection_name)
-
-                        unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
-                        if name in unique_venues:
-                            with st.spinner('Clearing data...'):
-                                clear_collection_venue(collection_name, name)
-
-                        with st.spinner('Adding data...'):
-                            # get totla number of rows
-                            len_df = len(df)
-                            my_small_bar = st.progress(0, text=f'Uploading 0/{len_df}')
-                            for i, row in df.iterrows():
-                                add_data(collection_name, row.to_dict())
-                                my_small_bar.progress((i+1)/len_df, text=f'Uploading {i+1}/{len_df}')
-                                if how_many!= 1:
-                                    my_big_bar.progress((e+1)/how_many, text=f'Uploading {e+1}/{how_many}')
-                            my_small_bar.progress(100, text=f'Upload Completed')
-                            st.balloons()
+                with st.spinner('Adding data...'):
+                    # get totla number of rows
+                    len_df = len(df)
+                    my_small_bar = st.progress(0, text=f'Uploading 0/{len_df}')
+                    for i, row in df.iterrows():
+                        add_data(collection_name, row.to_dict())
+                        my_small_bar.progress((i+1)/len_df, text=f'Uploading {i+1}/{len_df}')
+                    my_small_bar.progress(100, text=f'Upload Completed')
+                    st.balloons()
     
     def edit_data():
         # with st.expander(f'session state - {len(st.session_state)}'):
@@ -222,9 +287,10 @@ def main():
                 pass
         
         df = pd.DataFrame(data)
-        data = [doc for doc in data if doc['Details'] != 'nan']
-        df_empty = df[df['Details'] == 'nan']
-        df_full = df[df['Details'] != 'nan']
+        # if empty then 'nan'
+        data = [doc for doc in data if doc['Details'] != '']
+        df_empty = df[df['Details'] == '']
+        df_full = df[df['Details'] != '']
         df_empty = rescoring_empty(df_empty, new = True)
         with graph_container:
             try:
@@ -295,7 +361,7 @@ def main():
                             return int(rating_n.split('.')[0])
                         else:
                             return int(rating_n)
-                if type(rating_n) == float:
+                elif type(rating_n) == float:
                     return int(rating_n)
                 else:
                     return rating_n
@@ -304,28 +370,34 @@ def main():
             st.markdown('**Review**')
             st.markdown(review['Details'])
 
+            def get_descr(value):
+                if value == '0.0' or value == 0.0:
+                    return 'Nan'
+                else:
+                    return value
+                
             with c1:
-                overall = sac.rate(label=f'Overall Rating: **{review["Overall_Rating"]}**',
+                overall = sac.rate(label=f'Overall Rating: **{get_descr(review["Overall_Rating"])}**',
                                     value=int(review['New_Overall_Rating']),
                                     count=value_map[clean_rating_number(review['Overall_Rating'])],
                                     key=f'{review["idx"]}_overall')
             with c2:
-                food = sac.rate(label=f'Food Rating: **{review["Feedback_Food_Rating"]}**',
+                food = sac.rate(label=f'Food Rating: **{get_descr(review["Feedback_Food_Rating"])}**',
                                 value=int(review['New_Food_Rating']),
                                 count=value_map[clean_rating_number(review['Feedback_Food_Rating'])],
                                 key=f'{review["idx"]}_food')
             with c3:
-                drink = sac.rate(label=f'Drink Rating: **{review["Feedback_Drink_Rating"]}**',
+                drink = sac.rate(label=f'Drink Rating: **{get_descr(review["Feedback_Drink_Rating"])}**',
                                 value=int(review['New_Drink_Rating']),
                                 count=value_map[clean_rating_number(review['Feedback_Drink_Rating'])],
                                 key=f'{review["idx"]}_drink')
             with c4:
-                service = sac.rate(label=f'Service Rating: **{review["Feedback_Service_Rating"]}**',
+                service = sac.rate(label=f'Service Rating: **{get_descr(review["Feedback_Service_Rating"])}**',
                                     value=int(review['New_Service_Rating']),
                                     count=value_map[clean_rating_number(review['Feedback_Service_Rating'])],
                                     key=f'{review["idx"]}_service')
             with c5:
-                ambience = sac.rate(label=f'Ambience Rating: **{review["Feedback_Ambience_Rating"]}**',
+                ambience = sac.rate(label=f'Ambience Rating: **{get_descr(review["Feedback_Ambience_Rating"])}**',
                                     value=int(review['New_Ambience_Rating']),
                                     count=value_map[clean_rating_number(review['Feedback_Ambience_Rating'])],
                                     key = f'{review["idx"]}_ambience')
@@ -425,8 +497,6 @@ def main():
             st.write('**2** : **1**')
             st.write('**1** : **1**')
          return menu
-
-    
     
     def plot(df):
       final = df[df['Details'] != 'nan']
