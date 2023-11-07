@@ -227,7 +227,10 @@ def main():
         df_full = df[df['Details'] != 'nan']
         df_empty = rescoring_empty(df_empty, new = True)
         with graph_container:
-            create_container_for_each_sentiment(df_full,df_empty)
+            try:
+                create_container_for_each_sentiment(df_full,df_empty)
+            except:
+                pass
 
         map_id = {i: doc['idx'] for i, doc in enumerate(data)}
         try:
