@@ -151,8 +151,6 @@ def create_container_for_each_sentiment(df, df_empty = None):
    positive = df[df['Sentiment'] == 'POSITIVE']
    negative = df[df['Sentiment'] == 'NEGATIVE']
    neutral = df[df['Sentiment'] == 'neutral']
-   neutral = neutral[neutral['Details'] != '']
-   
    number_of_total_reviews = len(df)
    with st.expander('Reviews **{}**'.format(number_of_total_reviews + len(df_empty))):
       tab_empty, tab_positive, tab_negative, tab_neutral = st.tabs([f'Empty **{len(df_empty)}**', f'Positive **{len(positive)}**', f'Negative **{len(negative)}**', f'Neutral **{len(neutral)}**'])
@@ -170,7 +168,10 @@ def create_container_for_each_sentiment(df, df_empty = None):
          # transform in int if possible
          # if value in column to rescore is empty then change to 0
          for column in columns_to_rescore:
+            st.write(df[column].values[0])
             if type(df[column].values[0]) == str:
+               # if is empty then change to 0
+               df[column] = df[column].apply(lambda x: 0 if x == '' else x)
                try:
                   df[column] = df[column].astype(int)
                except:

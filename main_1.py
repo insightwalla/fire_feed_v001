@@ -285,75 +285,179 @@ class FeedBackHelper:
 
    def upload_excels(self):
       
+      radio = st.radio('Choose the upload method', ['Upload Excel', 'From DataBase'])
+      if radio == 'Upload Excel':
       # 1. Upload the excel
-      uploaded_files = st.file_uploader("Upload Excel", type="xlsx", accept_multiple_files=True, key='upload')
+         uploaded_files = st.file_uploader("Upload Excel", type="xlsx", accept_multiple_files=True, key='upload')
 
-      if uploaded_files != []:
-         # read the data
-         upload_space = st.empty()
-         tabs = st.tabs([str(u.name) for u in uploaded_files])
-         for i, tab in enumerate(tabs):
-            with tab:
-               df = pd.read_excel(uploaded_files[i])
-               st.write(df)
-      else:
-         st.stop()
-      # 2. Check if the file is not empty
-      def handle_upload():
          if uploaded_files != []:
-            # 3. Create a progress bar 
-            how_many = len(uploaded_files)
-            if how_many != 1:
-               my_big_bar = st.progress(0, text=f'Uploading 0/{how_many}')
-            # 4. Loop through the files
-            
-            for i, file in enumerate(uploaded_files):
-               # read the file
-               df = pd.read_excel(file)
-
-               names = df['Reservation: Venue'].unique().tolist()
-               # take off nan
-               names = [name for name in names if str(name) != 'nan']
-               name = names[0]  
-               df = preprocess_single_df(df)
-               df['idx'] = [i for i in range(len(df))]
-               df = process_data(df)
-               df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
-
-               # transform all in strings
-               for col in df.columns.tolist():
-                  df[col] = df[col].astype(str)
-
-               # check if the doc exists
-               doc_ref = self.db.collection(u'feedback').document(name)
-               doc = doc_ref.get()
-               my_bar = st.progress(0, text='Uploading data')
-
-               if doc.exists:
-                  #st.write('Document already exists')
-                  # delete the collection
-                  reviews = self.db.collection(u'feedback').document(name).collection(u'reviews').stream()
-                  for i, review in enumerate(reviews):
-                     self.db.collection(u'feedback').document(name).collection(u'reviews').document(review.id).delete()
-                  # upload the data
-                  for index, row in df.iterrows():
-                     self.db.collection(u'feedback').document(name).collection(u'reviews').add(row.to_dict())
-                     my_bar.progress(int((index+1) * 100/len(df)), text=f'Uploading Review {index+1}/{len(df)}')
-               else:
-                  # empty the doc
-                  doc_ref.set({})
-                  # upload the data
-                  for index, row in df.iterrows():
-                     self.db.collection(u'feedback').document(name).collection(u'reviews').add(row.to_dict())
-                     # update the bar
-                     my_bar.progress(int((index+1) * 100/len(df)), text=f'Uploading Review {index+1}/{len(df)}')
+            # read the data
+            upload_space = st.empty()
+            tabs = st.tabs([str(u.name) for u in uploaded_files])
+            for i, tab in enumerate(tabs):
+               with tab:
+                  df = pd.read_excel(uploaded_files[i])
+                  st.write(df)
+         else:
+            st.stop()
+         # 2. Check if the file is not empty
+         def handle_upload():
+            if uploaded_files != []:
+               # 3. Create a progress bar 
+               how_many = len(uploaded_files)
                if how_many != 1:
-                  my_big_bar.progress(int((i+1) * 100/how_many), text=f'Uploading {i+1}/{how_many}')
-            st.balloons()
-            st.info('All Done - You can go at the scoring section now! 😊')
+                  my_big_bar = st.progress(0, text=f'Uploading 0/{how_many}')
+               # 4. Loop through the files
+               
+               for i, file in enumerate(uploaded_files):
+                  # read the file
+                  df = pd.read_excel(file)
 
-      upload = upload_space.button('Upload', type='primary', use_container_width=True, on_click=handle_upload)
-   
+                  names = df['Reservation: Venue'].unique().tolist()
+                  # take off nan
+                  names = [name for name in names if str(name) != 'nan']
+                  name = names[0]  
+                  df = preprocess_single_df(df)
+                  df['idx'] = [i for i in range(len(df))]
+                  df = process_data(df)
+                  df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
+
+                  # transform all in strings
+                  for col in df.columns.tolist():
+                     df[col] = df[col].astype(str)
+
+                  # check if the doc exists
+                  doc_ref = self.db.collection(u'feedback').document(name)
+                  doc = doc_ref.get()
+                  my_bar = st.progress(0, text='Uploading data')
+
+                  if doc.exists:
+                     #st.write('Document already exists')
+                     # delete the collection
+                     reviews = self.db.collection(u'feedback').document(name).collection(u'reviews').stream()
+                     for i, review in enumerate(reviews):
+                        self.db.collection(u'feedback').document(name).collection(u'reviews').document(review.id).delete()
+                     # upload the data
+                     for index, row in df.iterrows():
+                        self.db.collection(u'feedback').document(name).collection(u'reviews').add(row.to_dict())
+                        my_bar.progress(int((index+1) * 100/len(df)), text=f'Uploading Review {index+1}/{len(df)}')
+                  else:
+                     # empty the doc
+                     doc_ref.set({})
+                     # upload the data
+                     for index, row in df.iterrows():
+                        self.db.collection(u'feedback').document(name).collection(u'reviews').add(row.to_dict())
+                        # update the bar
+                        my_bar.progress(int((index+1) * 100/len(df)), text=f'Uploading Review {index+1}/{len(df)}')
+                  if how_many != 1:
+                     my_big_bar.progress(int((i+1) * 100/how_many), text=f'Uploading {i+1}/{how_many}')
+               st.balloons()
+               st.info('All Done - You can go at the scoring section now! 😊')
+
+         upload = upload_space.button('Upload', type='primary', use_container_width=True, on_click=handle_upload)
+      else:
+         # create a list of week years from jan 2023
+         dates = pd.date_range(start='2022-12-01', end=pd.to_datetime('today').date(), freq='D')
+         dates = pd.DataFrame(dates, columns=['date'])
+         dates['week_year'] = dates['date'].apply(lambda x: 'W' + str(x.week) + 'Y' + str(x.year))
+         dates = dates.groupby('week_year').agg({'date': ['min', 'max']})
+         # sort by ascending date
+         dates = dates.sort_values(by=[('date', 'min')]) 
+         # now create a dict with the week year as key and the min and max date as value
+         week_year_dict = {}
+         for index, row in dates.iterrows():
+            week_year_dict[index] = {
+               'start_date': row['date']['min'].date(),
+               'end_date': row['date']['max'].date()
+            }
+
+         c1,c2 = st.columns(2)
+         container_w_y = c1.container()
+         container_venue = c2.container()
+         # use it for the selectbox
+         week_years = list(week_year_dict.keys())
+         week_year = c1.selectbox('Choose the week year', week_years, index=len(week_years)-1)
+         start_date = week_year_dict[week_year]['start_date']
+         end_date = week_year_dict[week_year]['end_date']
+
+         st.write(start_date, end_date)
+         # as d/m/y
+         start_date = start_date.strftime('%m/%d/%Y')
+         end_date = end_date.strftime('%m/%d/%Y')
+         # select the venues
+
+         venues = {
+            'Dishoom Covent Garden': '`jp-gs-379412.sevenrooms_covent_garden.reservation_feedback`' ,
+            'Dishoom Shoreditch': '`jp-gs-379412.sevenrooms_shoreditch.reservation_feedback`',
+            'Dishoom Kings Cross': '`jp-gs-379412.sevenrooms_kings_cross.reservation_feedback`',
+            'Dishoom Carnaby': '`jp-gs-379412.sevenrooms_carnaby.reservation_feedback`',
+            'Dishoom Edinburgh': '`jp-gs-379412.sevenrooms_edinburgh.reservation_feedback`',
+            'Dishoom Kensington': '`jp-gs-379412.sevenrooms_kensington.reservation_feedback`',
+            'Dishoom Manchester': '`jp-gs-379412.sevenrooms_manchester.reservation_feedback`',
+            'Dishoom Birmingham': '`jp-gs-379412.sevenrooms_birmingham.reservation_feedback`',
+            'Dishoom Canary Wharf': '`jp-gs-379412.sevenrooms_canary_wharf.reservation_feedback`',
+            'Dishoom Permit Room Brighton': '`jp-gs-379412.sevenrooms_permit_room_brighton.reservation_feedback`'
+         }
+         # use it to query the data
+         
+         with st.form('query'):
+            venues_list = list(venues.keys())
+            venue = c2.selectbox('Choose the venue', venues_list, index=len(venues_list)-1)
+            query = f'''
+            select
+               *
+            from
+               {venues[venue]}
+            where
+               reservation_date >= '{start_date}'
+               and reservation_date <= '{end_date}'
+            '''
+            st.write(query)
+
+            submit = st.form_submit_button('Submit')  
+            if submit:
+               data = GoogleBigQuery().query(query)
+               st.write(data)
+
+               # rename venue to Reservation_Venue
+               data = data.rename(columns={'venue': 'Reservation: Venue'})
+               data = data.rename(columns={'reservation_date': 'Reservation: Date'})
+               # date submitted == reservation date
+               data['Date Submitted'] = data['Reservation: Date']
+               # create a empty column for reservation time
+               data['Reservation: Time'] = ''
+               data = data.rename(columns={'ambience': 'Feedback: Ambience Rating'})
+               data = data.rename(columns={'service': 'Feedback: Service Rating'})
+               data = data.rename(columns={'food': 'Feedback: Food Rating'})
+               data = data.rename(columns={'drinks': 'Feedback: Drink Rating'})
+               data = data.rename(columns={'overall': 'Overall Rating'})
+               # add the missing columns Reservation: Overall Rating, Reservation: Food Rating, Reservation: Drinks Rating, Reservation: Service Rating, Reservation: Ambience Rating
+               data['Reservation: Overall Rating'] = data['Overall Rating']
+               data['Reservation: Food Rating'] = data['Feedback: Food Rating']
+               data['Reservation: Drinks Rating'] = data['Feedback: Drink Rating']
+               data['Reservation: Service Rating'] = data['Feedback: Service Rating']
+               data['Reservation: Ambience Rating'] = data['Feedback: Ambience Rating']
+               data['Reservation: Recommend to Friend'] = data['recommend_to_friend'].apply(lambda x: 'Yes' if x == 'True' else 'No')
+               data['Reservation: Feedback Notes'] = ''
+               data['Title'] = ''
+               data['Feedback: Recommend to Friend'] = data['recommend_to_friend'].apply(lambda x: 'Yes' if x == 'True' else 'No')
+               data['Reservation: Updated Date'] = ''
+               data = data.rename(columns={'notes': 'Details'})
+               # create a platform column
+               data['Platform'] = 'SevenRooms'
+               data = data.drop(columns=['order_id'])
+
+               data = preprocess_single_df(data)
+               st.write(data)
+
+               # create a button to load into memory
+               load = st.button('Load into memory', type='primary', use_container_width=True)
+
+
+
+
+         st.stop()
+
    def edit(self):
       with st.expander(f'Session_State {len(st.session_state)}'):
          st.write(st.session_state)
