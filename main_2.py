@@ -146,7 +146,7 @@ def main():
         c1,c2 = st.columns(2)
         # use it for the selectbox
         week_years = list(week_year_dict.keys())
-        week_year = c1.selectbox('Choose the week year', week_years, index=len(week_years)-1)
+        week_year = c1.selectbox('Choose the week year', week_years, index=0)
         start_date = week_year_dict[week_year]['start_date']
         end_date = week_year_dict[week_year]['end_date']
 
