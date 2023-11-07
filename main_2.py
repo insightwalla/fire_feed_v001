@@ -286,6 +286,11 @@ def main():
             else:
                 pass
         
+        # add a search bar
+        search = st.text_input('Search', key='search')
+        if search != '':
+            data = [doc for doc in data if search.lower() in doc['Details'].lower()]
+        
         df = pd.DataFrame(data)
         # if empty then 'nan'
         data = [doc for doc in data if doc['Details'] != '']
