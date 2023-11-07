@@ -441,7 +441,7 @@ def main():
             
             if space_for_update_button.form_submit_button('Edit', type ='primary', use_container_width=True):
                 modify_entry(collection_name, review_id, data)
-                st.success('Data edited')
+                st.toast('Data edited')
                 # check if you still need labels
                 # get how many non labelled and negative
                 df_to_label = df_full[df_full['Label_Dishoom'] == '']
