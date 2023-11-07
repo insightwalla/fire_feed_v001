@@ -720,6 +720,7 @@ def main():
 
         ai_template(st.session_state.data_for_ai)
         st.stop()
+    
     elif menu == 'Download':
         download()
 

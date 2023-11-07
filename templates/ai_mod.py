@@ -128,8 +128,9 @@ def ai_template(data):
 
                 with st.chat_message("assistant"):
                     st_cb = StreamHandler(st.empty())
-                    response = qa_chain.run(user_query, callbacks=[st_cb])
-                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    with st.spinner('Thinking...')
+                        response = qa_chain.run(user_query, callbacks=[st_cb])
+                        st.session_state.messages.append({"role": "assistant", "content": response})
 
 
     obj = CustomDataChatbot()
