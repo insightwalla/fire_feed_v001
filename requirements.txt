@@ -16,3 +16,5 @@ tiktoken
 faiss-cpu
 firebase_admin
 db-dtypes
+sentence-transformers
+langchain[docarray]

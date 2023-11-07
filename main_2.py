@@ -702,7 +702,20 @@ def main():
         reporting()
 
     elif menu == 'AI Assistant':
-        st.info('Coming Soon')
+        from templates.ai_mod import ai_template
+        # get data
+        if 'data_for_ai' not in st.session_state:
+            data = get_data(collection_name, as_dict=True)
+            df = pd.DataFrame(data)
+            df = df[df['Details'] != '']
+            df = df[df['Details'] != 'nan']
+            df = df[df['Label_Dishoom'] == '']
+            df = df[df['Sentiment'] == 'NEGATIVE']
+            # keep only venue and details columns
+            df = df[['Reservation_Venue', 'Details']]
+            st.session_state.data_for_ai = df
+
+        ai_template(st.session_state.data_for_ai)
         st.stop()
     elif menu == 'Download':
         download()

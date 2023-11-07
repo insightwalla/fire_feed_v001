@@ -1,123 +1,136 @@
-'''https://openai.com/enterprise-privacy'''
-# brain emojis -> 🧠
-import openai
-import langchain
-import streamlit as st
-langchain.verbose = False
-openai.api_key = st.secrets["openai_api_key"]
-from utils import *
 
-def final_page_ai(data, name_user = 'User'):
-    from dotenv import load_dotenv
-    from langchain.text_splitter import CharacterTextSplitter
-    from langchain.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings
-    from langchain.vectorstores import FAISS
-    from langchain.chat_models import ChatOpenAI
-    from langchain.memory import ConversationBufferMemory
-    from langchain.chains import ConversationalRetrievalChain
-    from langchain.llms import HuggingFaceHub
-    
-    def get_text(data):
-        data = data[data['Details'] != '']
-        data = data[data['Details'] != 'nan']
-        values_list = []
-        for c in ['Details', 'Reservation_Venue']:
-            values = data[c].tolist()
-            # transform in strings
-            values = [f'{c}: {i}' for i in values]
-            values_list.append(values)
-        return ' '.join([' '.join(i) for i in zip(*values_list)])
+def ai_template(data):
+    import os
+    import utils
+    import streamlit as st
+    from langchain.callbacks.base import BaseCallbackHandler
 
-    def get_text_chunks(text):
-        text_splitter = CharacterTextSplitter(
-            separator="\n",
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len
-        )
-        chunks = text_splitter.split_text(text)
-        return chunks
-
-    def get_vectorstore(text_chunks):
-        embeddings = OpenAIEmbeddings(openai_api_key = st.secrets["openai_api_key"])
-        # embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
-        vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
-        return vectorstore
-
-    def get_conversation_chain(vectorstore):
-        llm = ChatOpenAI(openai_api_key= st.secrets["openai_api_key"])
-        # llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.5, "max_length":512})
-        memory = ConversationBufferMemory(
-            memory_key='chat_history', return_messages=True)
-        conversation_chain = ConversationalRetrievalChain.from_llm(
-            llm=llm,
-            retriever=vectorstore.as_retriever(),
-            memory=memory
-        )
-        return conversation_chain
-
-    def handle_userinput(user_question):
-            try:
-                #st.write('trying')
-                response = st.session_state.conversation({'question': user_question})
-                st.session_state.chat_history = response['chat_history']
-            except:
-                #st.write('except')
-                st.session_state.raw_text = get_text(data)
-                st.session_state.text_chunks = get_text_chunks(st.session_state.raw_text)
-                vectorstore = get_vectorstore(st.session_state.text_chunks)
-                st.session_state.conversation = get_conversation_chain(
-                    st.session_state.vectorstore)
-                response = st.session_state.conversation({'question': user_question})
-                st.session_state.chat_history = response['chat_history']
-
-    def render_chat_history():
-        # reverse the order of the chat history
-        messages = st.session_state.chat_history
-        if messages:
-            for i, message in enumerate(messages):
-                c1,c2 = st.columns(2)
-                if i % 2 == 0:
-                    with st.chat_message(name = name_user, avatar = 'user'):
-                        st.write(message.content)
-                else:   
-                    with st.chat_message(name = 'AI', avatar = 'assistant'):
-                        st.write(message.content)
-
-    def main():
-        load_dotenv()
-        if "conversation" not in st.session_state:
-            st.session_state.conversation = None
-        if "chat_history" not in st.session_state:
-            st.session_state.chat_history = None
-        if "raw_text" not in st.session_state:
-            st.session_state.raw_text =  get_text(data)
-        if "text_chunks" not in st.session_state:
-            st.session_state.text_chunks = get_text_chunks(st.session_state.raw_text)
-        if "vectorstore" not in st.session_state:
-            st.session_state.vectorstore = get_vectorstore(st.session_state.text_chunks)
-
-
-        question_1 = 'Generate a in depth report for each restaurant - Highlight positive and negative points (make a numbered list) and talk about ways to improve.'
-        question_2 = 'Find the worst reviews - render a numbered list of the worst reviews'
-        question_3 = 'Find the best reviews - render a numbered list of the best reviews'
-
-        def ask_this(question):
-            handle_userinput(question)
-
-        button_question_1 = st.sidebar.button('Generate Report', use_container_width= True, on_click=ask_this, args=(question_1,))
-        button_question_2 = st.sidebar.button('Find the worst reviews', use_container_width= True, on_click=ask_this, args=(question_2,))
-        button_question_3 = st.sidebar.button('Find the best reviews', use_container_width= True, on_click=ask_this, args=(question_3,))
+    class StreamHandler(BaseCallbackHandler):
         
-        user_question = st.chat_input("Ask a question about the reviews:")
-        if user_question:
-            handle_userinput(user_question)
+        def __init__(self, container, initial_text=""):
+            self.container = container
+            self.text = initial_text
 
-        # handle reset
-        if st.button("New Chat", use_container_width= True, type="primary"):
-            st.session_state.conversation = None
-            st.session_state.chat_history = None
+        def on_llm_new_token(self, token: str, **kwargs):
+            self.text += token
+            self.container.markdown(self.text)
 
-        render_chat_history()
+    from langchain.chat_models import ChatOpenAI
+    from langchain.document_loaders import PyPDFLoader
+    from langchain.memory import ConversationBufferMemory
+    from langchain.embeddings import HuggingFaceEmbeddings
+    from langchain.chains import ConversationalRetrievalChain
+    from langchain.vectorstores import DocArrayInMemorySearch
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    
+    if 'messages' not in st.session_state:
+        st.session_state['messages'] = []
+    class CustomDataChatbot:
 
-    main()
+        def __init__(self):
+            self.openai_api_key = st.secrets['openai_api_key']
+            self.openai_model = "gpt-3.5-turbo"
+
+        @st.spinner('Analyzing documents..')
+        def setup_qa_chain(self, data):
+            # Load documents
+            # Split documents
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1500,
+                chunk_overlap=200
+            )
+            # transform data to text for each row join details and venue
+            data['text'] = data['Details'] + ' ' + data['Reservation_Venue']
+            # now as a big string
+            data = data['text'].str.cat(sep=' ')
+            splits = text_splitter.split_text(data)
+
+            # Create embeddings and store in vectordb
+            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            vectordb = DocArrayInMemorySearch.from_texts(splits, embeddings)
+
+            # Define retriever
+            retriever = vectordb.as_retriever(
+                search_type='mmr',
+                search_kwargs={'k':2, 'fetch_k':4}
+            )
+
+            # Setup memory for contextual conversation        
+            memory = ConversationBufferMemory(
+                memory_key='chat_history',
+                return_messages=True
+            )
+
+            # Setup LLM and QA chain
+            llm = ChatOpenAI(model_name=self.openai_model, temperature=0, streaming=True, openai_api_key=self.openai_api_key)
+            qa_chain = ConversationalRetrievalChain.from_llm(llm, retriever=retriever, memory=memory, verbose=True)
+            return qa_chain
+
+        def main(self):
+
+            #decorator
+            def enable_chat_history(func):
+                # to clear chat history after swtching chatbot
+                current_page = func.__qualname__
+                if "current_page" not in st.session_state:
+                    st.session_state["current_page"] = current_page
+                if st.session_state["current_page"] != current_page:
+                    try:
+                        st.cache_resource.clear()
+                        del st.session_state["current_page"]
+                        del st.session_state["messages"]
+                    except:
+                        pass
+
+                # to show chat history on ui
+                if "messages" not in st.session_state:
+                    st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+                for msg in st.session_state["messages"]:
+                    st.chat_message(msg["role"]).write(msg["content"])
+
+                def execute(*args, **kwargs):
+                    func(*args, **kwargs)
+                return execute
+
+            def display_msg(msg, author):
+                """Method to display message on the UI
+
+                Args:
+                    msg (str): message to display
+                    author (str): author of the message -user/assistant
+                """
+                st.session_state.messages.append({"role": author, "content": msg})
+                st.chat_message(author).write(msg)
+
+            
+            # User Inputs
+            enable_chat_history(self.main)
+            user_query = st.chat_input(placeholder="Ask me anything!")
+
+            # create 3 buttons for automatic questions
+            button_1 = st.sidebar.button('Generate a Report', use_container_width=True)
+            button_2 = st.sidebar.button('Show me the best reviews', use_container_width=True)
+            button_3 = st.sidebar.button('Show me the worst reviews', use_container_width=True)
+            
+            if button_1:
+                user_query = 'Generate an in depth report, highlight important points and patterns that emerge in the reviews. Give back a list of positive points and negative points'
+
+            if button_2:
+                user_query = 'Generate a list of the best reviews.'
+
+            if button_3:
+                user_query = 'Generate a list of the worst reviews.'
+
+            if user_query and data is not None:
+                qa_chain = self.setup_qa_chain(data)
+
+                display_msg(user_query, 'user')
+
+                with st.chat_message("assistant"):
+                    st_cb = StreamHandler(st.empty())
+                    response = qa_chain.run(user_query, callbacks=[st_cb])
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+
+
+    obj = CustomDataChatbot()
+    obj.main()
