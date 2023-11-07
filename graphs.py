@@ -168,7 +168,6 @@ def create_container_for_each_sentiment(df, df_empty = None):
          # transform in int if possible
          # if value in column to rescore is empty then change to 0
          for column in columns_to_rescore:
-            st.write(df[column].values[0])
             if type(df[column].values[0]) == str:
                # if is empty then change to 0
                df[column] = df[column].apply(lambda x: 0 if x == '' else x)
