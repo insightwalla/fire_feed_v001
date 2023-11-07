@@ -705,19 +705,18 @@ def main():
     elif menu == 'AI Assistant':
         from templates.ai_mod import ai_template
         # get data
-        if 'data_for_ai' not in st.session_state:
-            data = get_data(collection_name, as_dict=True)
-            if len(data) == 0:
-                st.info('Upload some data first!')
-                st.stop()
-            df = pd.DataFrame(data)
-            df = df[df['Details'] != '']
-            df = df[df['Details'] != 'nan']
-            df = df[df['Label_Dishoom'] == '']
-            df = df[df['Sentiment'] == 'NEGATIVE']
-            # keep only venue and details columns
-            df = df[['Reservation_Venue', 'Details']]
-            st.session_state.data_for_ai = df
+        data = get_data(collection_name, as_dict=True)
+        if len(data) == 0:
+            st.info('Upload some data first!')
+            st.stop()
+        df = pd.DataFrame(data)
+        df = df[df['Details'] != '']
+        df = df[df['Details'] != 'nan']
+        df = df[df['Label_Dishoom'] == '']
+        df = df[df['Sentiment'] == 'NEGATIVE']
+        # keep only venue and details columns
+        df = df[['Reservation_Venue', 'Details']]
+        st.session_state.data_for_ai = df
 
         ai_template(st.session_state.data_for_ai)
         st.stop()
