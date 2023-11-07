@@ -221,7 +221,8 @@ def main():
                     data['Feedback: Drink Rating'] = data['Feedback: Drink Rating'].apply(lambda x: 0 if x == '' else x)
                st.session_state.data = preprocess_single_df(data)
             
-            st.write(st.session_state.data if 'data' in st.session_state else 'No data available')
+            if 'data' in st.session_state:
+                st.write(st.session_state.data)
 
             if st.form_submit_button(f'Add the data', use_container_width =True, type = 'primary') and 'data' in st.session_state:
                 df = st.session_state.data
