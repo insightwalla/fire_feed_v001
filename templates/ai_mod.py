@@ -46,7 +46,11 @@ def ai_template(data):
             splits = text_splitter.split_text(data)
 
             # Create embeddings and store in vectordb
-            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            embeddings = OpenAIEmbeddings(
+                model_name=self.openai_model,
+                streaming=True,
+                openai_api_key=self.openai_api_key
+            )            
             vectordb = DocArrayInMemorySearch.from_texts(splits, embeddings)
 
             # Define retriever
@@ -67,7 +71,6 @@ def ai_template(data):
             return qa_chain
 
         def main(self):
-
             #decorator
             def enable_chat_history(func):
                 # to clear chat history after swtching chatbot
@@ -131,7 +134,12 @@ def ai_template(data):
                     with st.spinner('Thinking...'):
                         response = qa_chain.run(user_query, callbacks=[st_cb])
                         st.session_state.messages.append({"role": "assistant", "content": response})
-
+            
+            # create button to restart chat
+            restart = st.sidebar.button('New Chat', use_container_width=True, type = 'primary')
+            if restart:
+                st.session_state['messages'] = []
+                st.session_state['current_page'] = None
 
     obj = CustomDataChatbot()
     obj.main()
