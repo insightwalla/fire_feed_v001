@@ -106,24 +106,13 @@ def ai_template(data):
             
             # User Inputs
             enable_chat_history(self.main)
-            question = st.chat_input(placeholder="Ask me anything!")
 
             # create 3 buttons for automatic questions
             button_1 = st.sidebar.button('Generate a Report', use_container_width=True)
             button_2 = st.sidebar.button('Show me the best reviews', use_container_width=True)
             button_3 = st.sidebar.button('Show me the worst reviews', use_container_width=True)
             
-            if button_1:
-                user_query = 'Generate an in depth report, highlight important points and patterns that emerge in the reviews. Give back a list of positive points and negative points'
-
-            elif button_2:
-                user_query = 'Generate a list of the best reviews.'
-
-            elif button_3:
-                user_query = 'Generate a list of the worst reviews.'
-
-            elif question:
-                user_query = question
+            user_query = st.chat_input(placeholder="Ask me anything!")
 
             if user_query and data is not None:
                 qa_chain = self.setup_qa_chain(data)
@@ -136,6 +125,43 @@ def ai_template(data):
                         response = qa_chain.run(user_query, callbacks=[st_cb])
                         st.session_state.messages.append({"role": "assistant", "content": response})
             
+            if button_1:
+                user_query = 'Generate an in depth report, highlight important points and patterns that emerge in the reviews. Give back a list of positive points and negative points'
+                qa_chain = self.setup_qa_chain(data)
+
+                display_msg(user_query, 'user')
+
+                with st.chat_message("assistant"):
+                    st_cb = StreamHandler(st.empty())
+                    with st.spinner('Thinking...'):
+                        response = qa_chain.run(user_query, callbacks=[st_cb])
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+
+            if button_2:
+                user_query = 'Generate a list of the best reviews, found in the data.'
+                qa_chain = self.setup_qa_chain(data)
+
+                display_msg(user_query, 'user')
+
+                with st.chat_message("assistant"):
+                    st_cb = StreamHandler(st.empty())
+                    with st.spinner('Thinking...'):
+                        response = qa_chain.run(user_query, callbacks=[st_cb])
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+
+            if button_3:
+                user_query = 'Generate a list of the worst reviews, found in the data.'
+
+                qa_chain = self.setup_qa_chain(data)
+
+                display_msg(user_query, 'user')
+
+                with st.chat_message("assistant"):
+                    st_cb = StreamHandler(st.empty())
+                    with st.spinner('Thinking...'):
+                        response = qa_chain.run(user_query, callbacks=[st_cb])
+                        st.session_state.messages.append({"role": "assistant", "content": response})
+
             # create button to restart chat
             restart = st.sidebar.button('New Chat', use_container_width=True, type = 'primary')
             if restart:
