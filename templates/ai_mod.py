@@ -106,7 +106,7 @@ def ai_template(data):
             
             # User Inputs
             enable_chat_history(self.main)
-            user_query = st.chat_input(placeholder="Ask me anything!")
+            question = st.chat_input(placeholder="Ask me anything!")
 
             # create 3 buttons for automatic questions
             button_1 = st.sidebar.button('Generate a Report', use_container_width=True)
@@ -116,11 +116,14 @@ def ai_template(data):
             if button_1:
                 user_query = 'Generate an in depth report, highlight important points and patterns that emerge in the reviews. Give back a list of positive points and negative points'
 
-            if button_2:
+            elif button_2:
                 user_query = 'Generate a list of the best reviews.'
 
-            if button_3:
+            elif button_3:
                 user_query = 'Generate a list of the worst reviews.'
+
+            elif question:
+                user_query = question
 
             if user_query and data is not None:
                 qa_chain = self.setup_qa_chain(data)
