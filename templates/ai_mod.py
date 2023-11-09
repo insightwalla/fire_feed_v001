@@ -117,13 +117,11 @@ def ai_template(data):
             if user_query and data is not None:
                 with st.spinner('Thinking...'):
                     qa_chain = self.setup_qa_chain(data)
-
                     display_msg(user_query, 'user')
-
                     with st.chat_message("assistant"):
                         st_cb = StreamHandler(st.empty())
-                            response = qa_chain.run(user_query, callbacks=[st_cb])
-                            st.session_state.messages.append({"role": "assistant", "content": response})
+                    response = qa_chain.run(user_query, callbacks=[st_cb])
+                    st.session_state.messages.append({"role": "assistant", "content": response})
             
             elif button_1:
                 user_query = 'Generate an in depth report, highlight important points and patterns that emerge in the reviews. Give back a list of positive points and negative points'
