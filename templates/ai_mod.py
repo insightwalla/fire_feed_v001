@@ -137,7 +137,7 @@ def ai_template(data):
                         response = qa_chain.run(user_query, callbacks=[st_cb])
                         st.session_state.messages.append({"role": "assistant", "content": response})
 
-            elifif button_2:
+            elif button_2:
                 user_query = 'Generate a list of the best reviews, found in the data.'
                 qa_chain = self.setup_qa_chain(data)
 
