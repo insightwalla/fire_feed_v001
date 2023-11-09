@@ -125,7 +125,7 @@ def ai_template(data):
                         response = qa_chain.run(user_query, callbacks=[st_cb])
                         st.session_state.messages.append({"role": "assistant", "content": response})
             
-            if button_1:
+            elif button_1:
                 user_query = 'Generate an in depth report, highlight important points and patterns that emerge in the reviews. Give back a list of positive points and negative points'
                 qa_chain = self.setup_qa_chain(data)
 
@@ -137,7 +137,7 @@ def ai_template(data):
                         response = qa_chain.run(user_query, callbacks=[st_cb])
                         st.session_state.messages.append({"role": "assistant", "content": response})
 
-            if button_2:
+            elifif button_2:
                 user_query = 'Generate a list of the best reviews, found in the data.'
                 qa_chain = self.setup_qa_chain(data)
 
@@ -149,7 +149,7 @@ def ai_template(data):
                         response = qa_chain.run(user_query, callbacks=[st_cb])
                         st.session_state.messages.append({"role": "assistant", "content": response})
 
-            if button_3:
+            elif button_3:
                 user_query = 'Generate a list of the worst reviews, found in the data.'
 
                 qa_chain = self.setup_qa_chain(data)
