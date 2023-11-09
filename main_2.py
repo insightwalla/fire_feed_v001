@@ -259,7 +259,7 @@ def main():
         #review_id = st.selectbox('Select ID', [doc['idx'] for doc in get_data(collection_name, as_dict=True)])
         data = get_data(collection_name, as_dict=True)
         if len(data) == 0:
-            st.info('No data available, need to upload some reviews!')
+            st.info('Go to the Upload section and select some!')
             st.stop()        
         else:
             pass
@@ -720,7 +720,6 @@ def main():
         st.session_state.data_for_ai = df
 
         ai_template(st.session_state.data_for_ai)
-        st.stop()
     
     elif menu == 'Download':
         download()
