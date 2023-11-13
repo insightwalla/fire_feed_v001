@@ -568,7 +568,7 @@ def preprocess_single_df(df):
    df['Year'] = df.apply(lambda x: str(pd.to_datetime(x['Date Submitted']).year) if x['Reservation: Date'] in empty else str(pd.to_datetime(x['Reservation: Date']).year), axis=1)
    df['Week_Year'] = df.apply(lambda x: x['Week'] + 'W' + x['Year'], axis=1)
    df['Month_Year'] = df.apply(lambda x: x['Month'] + 'M' + x['Year'], axis=1)
-   df['date_for_filter'] = df.apply(lambda x: str(pd.to_datetime(x['Date Submitted']).date()) if x['Reservation: Date'] in empty else str(pd.to_datetime(x['Reservation: Date']).date()), axis=1)
+   df['date_for_filter'] = df.apply(lambda x: str(pd.to_datetime(x['Date Submitted'], dayfirst = True).date()) if x['Reservation: Date'] in empty else str(pd.to_datetime(x['Reservation: Date']).date()), axis=1)
    df['Suggested to Friend'] = df['Feedback: Recommend to Friend'].apply(lambda x: x if x == 'Yes' or x == 'No' else 'Not Specified')
    # initialize the new scoring columns
    df['New Overall Rating'] = 1
