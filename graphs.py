@@ -192,6 +192,7 @@ def create_container_for_each_sentiment(df, df_empty = None):
          avg_score = np.mean(df_scores['Score'])
 
          # create a average for each row
+         df = df.copy()
          df['Average Score'] = scores
 
          col1, col2 = st.columns(2)

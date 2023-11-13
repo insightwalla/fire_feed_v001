@@ -221,6 +221,7 @@ def rescoring_empty(df, new = False):
                      2: 1,
                        1: 1
                }
+   df = df.copy()
    df.loc[:, columns_to_rescore] = df[columns_to_rescore].replace('', 0)   # now transform the values into flaot
    df.loc[:, columns_to_rescore] = df[columns_to_rescore].astype(float)  
    df.loc[:, columns_to_rescore] = df[columns_to_rescore].replace(value_map)
