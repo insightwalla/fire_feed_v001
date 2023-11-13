@@ -152,8 +152,8 @@ def main():
 
         st.write(start_date, end_date)
         # as d/m/y
-        start_date = start_date.strftime('%m/%d/%Y')
-        end_date = end_date.strftime('%m/%d/%Y')
+        start_date = pd.to_datetime(start_date).strftime('%Y-%m-%d')
+        end_date = pd.to_datetime(end_date).strftime('%Y-%m-%d')
         # select the venues
 
         venues = {
@@ -179,8 +179,8 @@ def main():
             from
                {venues[venue]}
             where
-               reservation_date >= '{start_date}'
-               and reservation_date <= '{end_date}'
+                parse_date('%d/%m/%Y', reservation_date) >= '{start_date}'
+                and parse_date('%d/%m/%Y', reservation_date) <= '{end_date}'
             '''
             submit = st.form_submit_button(f'Prepare **{venue}** (**{start_date}** - **{end_date}**)', use_container_width=True, type='primary')
             if submit:
