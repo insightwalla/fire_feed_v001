@@ -1,8 +1,6 @@
 numpy
 pandas 
 streamlit 
-torch 
-transformers
 plotly
 openpyxl
 streamlit-authenticator
@@ -11,7 +9,6 @@ deep_translator
 google-cloud-bigquery
 langchain
 openai
-pandasai
 tiktoken
 faiss-cpu
 firebase_admin
