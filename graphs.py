@@ -94,10 +94,10 @@ def create_graph_keywords_as_a_whole(df, container = None):
 
 def create_timeseries_graph(df):
    # check that
-   df['Date_Submitted'] = pd.to_datetime(df['Date_Submitted'])
+   df['Date_Submitted'] = pd.to_datetime(df['Date_Submitted'], dayfirst = True)
    df['Date_Submitted'] = df['Date_Submitted'].dt.date
    # same for reservation date
-   df['Reservation_Date'] = pd.to_datetime(df['Reservation_Date'])
+   df['Reservation_Date'] = pd.to_datetime(df['Reservation_Date'], dayfirst = True)
    df['Reservation_Date'] = df['Reservation_Date'].dt.date
 
    # create a new column called date_to_plot, is the reseravtion date if it is not empty, otherwise is the date submitted
