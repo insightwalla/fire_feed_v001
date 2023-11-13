@@ -50,7 +50,7 @@ def lambda_for_month(x: pd.Series):
    elif x['Reservation: Date'] not in empty and x['Date Submitted'] in empty:
          return str(pd.to_datetime(x['Reservation: Date']).month)
    elif x['Reservation: Date'] not in empty and x['Date Submitted'] not in empty:
-         return str(pd.to_datetime(x['Reservation: Date']).month)
+         return str(pd.to_datetime(x['Reservation: Date'],dayfirst = True).month)
    else:
       return "Not Specified"
 
@@ -75,7 +75,7 @@ def lambda_for_week(x: pd.Series):
    elif x['Reservation: Date'] not in empty and x['Date Submitted'] in empty:
          return str(pd.to_datetime(x['Reservation: Date']).week)
    elif x['Reservation: Date'] not in empty and x['Date Submitted'] not in empty:
-         return str(pd.to_datetime(x['Reservation: Date']).week)
+         return str(pd.to_datetime(x['Reservation: Date'],dayfirst = True).week)
    else:
       return 'Not Specified'
    
@@ -100,7 +100,7 @@ def lambda_for_day_name(x: pd.Series):
    elif x['Reservation: Date'] not in empty and x['Date Submitted'] in empty:
       return str(pd.to_datetime(x['Reservation: Date']).day_name())
    elif x['Reservation: Date'] not in empty and x['Date Submitted'] not in empty:
-      return str(pd.to_datetime(x['Reservation: Date']).day_name())
+      return str(pd.to_datetime(x['Reservation: Date'],dayfirst = True).day_name())
    else:
       return 'Not Specified'   
    
@@ -565,10 +565,10 @@ def preprocess_single_df(df):
    df["Month"] = df.apply(lambda_for_month, axis=1)
    df["Day_Name"] = df.apply(lambda_for_day_name, axis=1)
    df['Day_Part'] = df.apply(lambda_for_day_part, axis=1)
-   df['Year'] = df.apply(lambda x: str(pd.to_datetime(x['Date Submitted']).year) if x['Reservation: Date'] in empty else str(pd.to_datetime(x['Reservation: Date']).year), axis=1)
+   df['Year'] = df.apply(lambda x: str(pd.to_datetime(x['Date Submitted'],dayfirst = True).year) if x['Reservation: Date'] in empty else str(pd.to_datetime(x['Reservation: Date'],dayfirst = True).year), axis=1)
    df['Week_Year'] = df.apply(lambda x: x['Week'] + 'W' + x['Year'], axis=1)
    df['Month_Year'] = df.apply(lambda x: x['Month'] + 'M' + x['Year'], axis=1)
-   df['date_for_filter'] = df.apply(lambda x: str(pd.to_datetime(x['Date Submitted'], dayfirst = True).date()) if x['Reservation: Date'] in empty else str(pd.to_datetime(x['Reservation: Date']).date()), axis=1)
+   df['date_for_filter'] = df.apply(lambda x: str(pd.to_datetime(x['Date Submitted'], dayfirst = True).date()) if x['Reservation: Date'] in empty else str(pd.to_datetime(x['Reservation: Date'],dayfirst = True).date()), axis=1)
    df['Suggested to Friend'] = df['Feedback: Recommend to Friend'].apply(lambda x: x if x == 'Yes' or x == 'No' else 'Not Specified')
    # initialize the new scoring columns
    df['New Overall Rating'] = 1
