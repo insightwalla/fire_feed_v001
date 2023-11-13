@@ -445,10 +445,11 @@ def main():
                     }
             
             if space_for_update_button.form_submit_button('Edit', type ='primary', use_container_width=True):
-                modify_entry(collection_name, review_id, data)
-                st.session_state.review_id += 1
+                with st.spinner('Updating'):
+                    modify_entry(collection_name, review_id, data)
+                    st.session_state.review_id += 1
+                    st.toast('Data edited', icon='✅')
                 st.rerun()
-                st.toast('Data edited', icon='✅')
 
                 # check if you still need labels
                 # get how many non labelled and negative
