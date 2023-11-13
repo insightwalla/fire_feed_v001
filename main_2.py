@@ -179,8 +179,8 @@ def main():
             from
                {venues[venue]}
             where
-                parse_date('%d/%m/%Y', received_date) >= '{start_date}'
-                and parse_date('%d/%m/%Y', received_date) <= '{end_date}'
+                parse_date('%d/%m/%Y', reservation_date) >= '{start_date}'
+                and parse_date('%d/%m/%Y', reservation_date) <= '{end_date}'
             '''
             submit = st.form_submit_button(f'Prepare **{venue}** (**{start_date}** - **{end_date}**)', use_container_width=True, type='primary')
             if submit:
@@ -306,8 +306,11 @@ def main():
                 pass
 
         map_id = {i: doc['idx'] for i, doc in enumerate(data)}
+        # initialise the review id
+        if 'review_id' not in st.session_state:
+            st.session_state.review_id = 1
         try:
-            review_id = c2.number_input(f'Review: {st.session_state.get("review_id", 1)}/{len(data)}', min_value=1, max_value=len(data), value=st.session_state.get('review_id', 1), key='review_id')
+            review_id = c2.number_input(f'Review: {st.session_state.get("review_id", 1)}/{len(data)}', min_value=1, max_value=len(data), value=st.session_state.get('review_id', 1))
         except:
             st.success('No more data to label')
             st.stop()
@@ -443,6 +446,8 @@ def main():
             
             if space_for_update_button.form_submit_button('Edit', type ='primary', use_container_width=True):
                 modify_entry(collection_name, review_id, data)
+                st.session_state.review_id += 1
+                st.rerun()
                 st.toast('Data edited', icon='✅')
 
                 # check if you still need labels
