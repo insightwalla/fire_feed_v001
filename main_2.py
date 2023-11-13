@@ -555,7 +555,7 @@ def main():
       data = get_data(collection_name, as_dict=True)
       df = pd.DataFrame(data)
       if len(df) ==  0:
-        st.write('Update some reviews, you can do it in the Upload Section')
+        st.info('Update some reviews, you can do it in the Upload Section')
         st.stop()
       data = df
       plot(data)
