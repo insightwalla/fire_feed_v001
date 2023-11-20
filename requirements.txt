@@ -16,3 +16,4 @@ db-dtypes
 sentence-transformers
 docarray
 st-gsheets-connection
+pydantic==1.10.9
