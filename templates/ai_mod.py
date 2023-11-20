@@ -1,7 +1,11 @@
+from langchain.chat_models import ChatOpenAI
+from langchain.memory import ConversationBufferMemory
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.chains import ConversationalRetrievalChain
+from langchain.vectorstores import DocArrayInMemorySearch
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 def ai_template(data):
-    import os
-    import utils
     import streamlit as st
     from langchain.callbacks.base import BaseCallbackHandler
 
@@ -15,13 +19,6 @@ def ai_template(data):
             self.text += token
             self.container.markdown(self.text)
 
-    from langchain.chat_models import ChatOpenAI
-    from langchain.document_loaders import PyPDFLoader
-    from langchain.memory import ConversationBufferMemory
-    from langchain.embeddings import HuggingFaceEmbeddings, OpenAIEmbeddings
-    from langchain.chains import ConversationalRetrievalChain
-    from langchain.vectorstores import DocArrayInMemorySearch
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
     
     if 'messages' not in st.session_state:
         st.session_state['messages'] = []

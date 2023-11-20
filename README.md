@@ -1,21 +1,17 @@
 
-    ### SETUP (MacOS)
+### SETUP (MacOS)
 
-    ```bash
-    virtualenv venv -p python3
-    source venv/bin/activate
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    ```
+```bash
+python3 -m venv myenv
+source myenv/bin/activate
+pip install -r requirements.txt
+```
 
-    ### Setup (Windows)
+### Setup (Windows)
 
-    ```bash
-    python -m venv venv
-    venv\Scriptsctivate
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    ```
+```bash
+python3 -m venv myenv
+.\myenv\Scripts\activate
+pip install -r requirements.txt
+```
 
-    DESCRIPTION
-    

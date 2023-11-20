@@ -1,13 +1,17 @@
-from typing import Callable
+'''
+This file contains the login function for the streamlit app.
+'''
 import yaml
 from yaml import SafeLoader
 from streamlit_authenticator import Authenticate
 import streamlit as st
-from utils import *
 
-config_file = "config.yaml"
+CONFIG_FILE = "config.yaml"
 def login(render_func):
-    with open(config_file) as file:
+    '''
+    This function is used to login to the streamlit app.
+    '''
+    with open(CONFIG_FILE, encoding='utf-8') as file:
         config = yaml.load(file, Loader=SafeLoader)
 
     authenticator = Authenticate(
@@ -20,9 +24,9 @@ def login(render_func):
 
     c1, c2 = st.columns(2)
     with c1:
-        name, authentication_status, username = authenticator.login('Login', 'main')
+        name, authentication_status, _ = authenticator.login('Login', 'main')
 
-    if authentication_status: 
+    if authentication_status:
         with c1:
             authenticator.logout('Logout', 'main')
 

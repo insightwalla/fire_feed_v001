@@ -1,3 +1,9 @@
+'''
+This file contains the class GoogleBigQuery that connects to Google Big Query and the 
+class TransformationGoogleBigQuery that transforms the data from Google Big Query to 
+a format that can be used for visualization.
+
+'''
 from google.cloud import bigquery
 from google.oauth2 import service_account
 import streamlit as st
@@ -41,7 +47,6 @@ def lambda_for_table_number(x):
         except:
             table = None
     return table
-
 
 class TransformationGoogleBigQuery:
     def __init__(self, df, plot = True):
@@ -225,6 +230,48 @@ class TransformationGoogleBigQuery:
         else:
             return self.df
     
+from streamlit_gsheets import GSheetsConnection
+
+def get_direct_feedback(venue, start_date, end_date):
+    '''
+    This function returns the direct feedback from the google sheet
+    It requires the venue, the start date and the end date
+
+    library: st-gsheets-connection
+    '''
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df = conn.read()
+    df = df[df['CAFE'] == venue]
+    df['DATE RECEIVED'] = pd.to_datetime(df['DATE RECEIVED'])
+    df = df[(df['DATE RECEIVED'] >= start_date) & (df['DATE RECEIVED'] <= end_date)]
+    df['DATE RECEIVED'] = df['DATE RECEIVED'].dt.strftime('%d/%m/%Y')
+    return df
+
+def get_google_reviews(venue, start_date, end_date):
+    from googleapiclient.discovery import build
+    from google.oauth2 import service_account
+
+    # Load the credentials
+    credentials = service_account.Credentials.from_service_account_file('path_to_your_service_account_file.json')
+
+    # Build the service
+    service = build('mybusiness', 'v4', credentials=credentials)
+
+    # Specify the account and location
+    account_id = 'your_account_id'
+    location_id = 'your_location_id'
+
+    # Get the reviews
+    response = service.accounts().locations().reviews().list(parent=f'accounts/{account_id}/locations/{location_id}').execute()
+
+    # Print the reviews
+    for review in response['reviews']:
+        print(review) 
+
+def get_tripadvisor_reviews(venue, start_date, end_date):
+    #https://developer-tripadvisor.com/content-api/
+    pass
+
 if __name__ == "__main__":
     googleconnection = GoogleBigQuery(key_path = "key.json")
     query = 'SELECT * FROM `sql_server_on_rds.Dishoom_dbo_dpvHstCheckSummary` LIMIT 100'
