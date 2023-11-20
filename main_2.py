@@ -227,6 +227,7 @@ def main():
                     )
                 if len(data) == 0:
                     st.info('No data found for the selected dates')
+                    st.stop()
                 # add to the data the direct feedback
                 # reset index
                 data = prepare_data(data)
