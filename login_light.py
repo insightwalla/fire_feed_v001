@@ -24,8 +24,7 @@ def login(render_func):
 
     c1, c2 = st.columns(2)
     with c1:
-        name, authentication_status, _ = authenticator.login('Login', 'main')
-
+        name, authentication_status, _ = authenticator.login()
     if authentication_status:
         with c1:
             authenticator.logout('Logout', 'main')
