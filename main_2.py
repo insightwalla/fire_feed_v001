@@ -400,17 +400,19 @@ def main():
 
                     for i, venue in enumerate(venues[1:]):
                         # select the data for that venue
-                        df = data[data['Reservation: Venue'] == venue]
-                        df = prepare_data_from_gsheets(df)
-                        df = preprocess_single_df(df)
-                        # get direct feedback
                         data_for_venue = st.session_state['Direct Feedback']
+                        df = data[data['Reservation: Venue'] == venue]
+
                         if len(data_for_venue) > 0:
                             data_for_venue = data_for_venue[data_for_venue['Reservation: Venue'] == venue]
                             # append to the data
-                            df = pd.concat([df, data_for_venue], axis=0)
+                        df = pd.concat([df, data_for_venue], axis=0)
                             # need to reset the index
                             #df = df.reset_index(drop=True)
+                        df = prepare_data_from_gsheets(df)
+                        df = preprocess_single_df(df)
+                        # get direct feedback
+ 
                         st.session_state[venue] = df
                         # write in tab
                         with tabs[i]:
