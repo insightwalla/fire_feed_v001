@@ -11,7 +11,7 @@ import pandas as pd
 import streamlit as st
 import base64
 import streamlit_antd_components as sac
-from google_big_query import get_direct_feedback
+from google_big_query import get_direct_feedback, get_google_sheet_data
 from templates.ai_mod import ai_template
 from graphs import  create_chart_totals_labels, create_container_for_each_sentiment, \
                     create_timeseries_graph, create_graph_keywords_as_a_whole, \
@@ -21,8 +21,6 @@ from graphs import  create_chart_totals_labels, create_container_for_each_sentim
 from utils import *
 
 st.set_page_config(layout = 'wide')
-
-
 
 @st.cache_resource()
 def init_firebase_db():
@@ -147,7 +145,7 @@ def clear_agent_from_name(collection: str, name: str):
 
 def main():
     '''This is the main function of the app'''
-    collection_name = 'conversations'
+    collection_name = 'testing_feedback_v01'
 
     def create_week_year_dict():
         dates = pd.date_range(start='2022-12-01', end=pd.to_datetime('today').date(), freq='D')
@@ -176,7 +174,7 @@ def main():
         return venue
 
     def adding_data():
-        collection_name = 'conversations'
+        collection_name = 'testing_feedback_v01'
         week_year_dict = create_week_year_dict()
         c1,c2 = st.columns(2)
         start_date, end_date = get_selected_dates(week_year_dict, c1)
@@ -273,6 +271,190 @@ def main():
                     my_small_bar.progress(100, text='Upload Completed')
                     st.balloons()
 
+    def adding_data_from_google_sheet():
+        '''
+        Almost ready to be used
+
+        # double entry issue -> check same venue name
+        # need to add the possibility to add ALL the venue in the same moment
+        # need to add the the direct feedback
+        '''
+        data = get_google_sheet_data()
+        # no empty rows
+        data = data.dropna(how='all')
+        venues = data["Reservation: Venue"].unique().tolist()
+        #add all and remove nan
+        venues = ['All'] + [venue for venue in venues if str(venue) != 'nan']
+        st.write(venues)
+
+        # choose the venue
+        with st.form('query'):
+            venue = st.selectbox('Choose the venue', options = venues, index = 0)
+            submit = st.form_submit_button(
+                f'Prepare **{venue}**', 
+                use_container_width=True,
+                type='primary')
+            
+            if submit:
+                data = prepare_data_from_gsheets(data)
+                data = preprocess_single_df(data)
+                st.session_state.data = data
+                st.write(st.session_state.data)
+
+            if st.form_submit_button(
+                    label = 'Add the data',
+                    use_container_width =True,
+                    type = 'primary'
+                    ) and 'data' in st.session_state:
+
+                df = st.session_state.data
+                df['idx'] = list(range(len(df)))
+                df = process_data(df)
+                df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
+
+                # transform all in strings
+                for col in df.columns.tolist():
+                    df[col] = df[col].astype(str)
+
+                # check if the doc exists
+                data = get_data(collection_name)
+                unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
+                if venue in unique_venues:
+                    with st.spinner('Clearing data...'):
+                        clear_collection_venue(collection_name, venue)
+
+                with st.spinner('Adding data...'):
+                    # get totla number of rows
+                    len_df = len(df)
+                    my_small_bar = st.progress(0, text=f'Uploading 0/{len_df}')
+                    for i, row in df.iterrows():
+                        add_data(collection_name, row.to_dict())
+                        my_small_bar.progress((i+1)/len_df, text=f'Uploading {i+1}/{len_df}')
+                    my_small_bar.progress(100, text='Upload Completed')
+                    st.balloons()
+    
+    def adding_data_from_google_sheet_all_option():
+        '''
+        Almost ready to be used
+
+        # double entry issue -> check same venue name
+        # need to add the possibility to add ALL the venue in the same moment
+        # need to add the the direct feedback
+        '''
+        data = get_google_sheet_data()
+        data = data.dropna(how='all')
+        # take off the '
+        data['Reservation: Venue'] = data['Reservation: Venue'].str.replace("'", "")
+        venues = data["Reservation: Venue"].unique().tolist()
+        venues = ['All'] + [venue for venue in venues if str(venue) != 'nan']
+        #st.write(venues)
+
+        # choose the venue
+        with st.form('query'):
+            venue = st.selectbox('Choose the venue', options = venues, index = 0)
+            submit = st.form_submit_button(
+                f'Prepare **{venue}**', 
+                use_container_width=True,
+                type='primary')
+            
+            if submit:
+                if venue == 'All':
+                    # create a tab for each venue
+                    tabs = st.tabs(venues[1:] + ['Direct Feedback'])
+                    # direct feedback
+                    df_dir = get_direct_feedback()
+                    df_dir = process_direct_f(df_dir)
+                    st.session_state['Direct Feedback'] = df_dir
+                    with tabs[-1]:
+                        st.write(st.session_state['Direct Feedback'])
+
+                    for i, venue in enumerate(venues[1:]):
+                        # select the data for that venue
+                        df = data[data['Reservation: Venue'] == venue]
+                        df = prepare_data_from_gsheets(df)
+                        df = preprocess_single_df(df)
+                        # get direct feedback
+                        data_for_venue = st.session_state['Direct Feedback']
+                        if len(data_for_venue) > 0:
+                            data_for_venue = data_for_venue[data_for_venue['Reservation: Venue'] == venue]
+                            # append to the data
+                            df = pd.concat([df, data_for_venue], axis=0)
+                        st.session_state[venue] = df
+                        # write in tab
+                        with tabs[i]:
+                            st.write(st.session_state[venue])
+
+
+                    # now add the data from direct feedback to venue filtering from the venue
+                else:
+                    df = data[data['Reservation: Venue'] == venue]
+                    df = prepare_data_from_gsheets(df)
+                    df = preprocess_single_df(df)
+                    st.session_state[venue] = df
+                    st.write(st.session_state[venue])
+
+            if st.form_submit_button(
+                    label = 'Add the data',
+                    use_container_width =True,
+                    type = 'primary'
+                    ):
+                
+                if venue == 'All':
+                    # for each venue
+                    for v in venues[1:]:
+                        # select the data for that venue
+                        df = st.session_state[v]
+                        df['idx'] = list(range(len(df)))
+                        df = process_data(df)
+                        df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
+                        # transform all in strings
+                        for col in df.columns.tolist():
+                            df[col] = df[col].astype(str)
+
+                        # check if the doc exists
+                        data = get_data(collection_name)
+                        unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
+                        if v in unique_venues:
+                            with st.spinner('Clearing data...'):
+                                clear_collection_venue(collection_name, v)
+
+                        with st.spinner('Adding data...'):
+                            # get totla number of rows
+                            len_df = len(df)
+                            my_small_bar = st.progress(0, text=f'Uploading 0/{len_df}')
+                            for i, row in df.iterrows():
+                                add_data(collection_name, row.to_dict())
+                                my_small_bar.progress(min((i+1)/len_df, 1.0), text=f'Uploading {i+1}/{len_df}')
+                            my_small_bar.progress(100, text=f'{v} - Upload Completed')
+                    st.balloons()
+
+                else:
+                    df = st.session_state[v]
+                    df['idx'] = list(range(len(df)))
+                    df = process_data(df)
+                    df = df.rename(columns=lambda x: x.replace(':', '').replace('(', '').replace(')', '').replace(' ', '_'))
+
+                    # transform all in strings
+                    for col in df.columns.tolist():
+                        df[col] = df[col].astype(str)
+
+                    # check if the doc exists
+                    data = get_data(collection_name)
+                    unique_venues = list(set([doc.to_dict()['Reservation_Venue'] for doc in data]))
+                    if v in unique_venues:
+                        with st.spinner('Clearing data...'):
+                            clear_collection_venue(collection_name, venue)
+
+                    with st.spinner('Adding data...'):
+                        # get totla number of rows
+                        len_df = len(df)
+                        my_small_bar = st.progress(0, text=f'Uploading 0/{len_df}')
+                        for i, row in df.iterrows():
+                            add_data(collection_name, row.to_dict())
+                            my_small_bar.progress(min((i+1)/len_df, 1.0), text=f'Uploading {i+1}/{len_df}')
+                        my_small_bar.progress(100, text=f'{v} - Upload Completed')
+                        st.balloons()
+
     def filter_data_by_venue(data, venue):
         return [doc for doc in data if doc['Reservation_Venue'] == venue]
 
@@ -316,7 +498,7 @@ def main():
             st.stop()
         else:
             pass
-        
+
         search_container = st.container()
         graph_container = st.container()
         c1,c2 = st.columns(2)
@@ -413,6 +595,14 @@ def main():
             c1,c2,c3,c4,c5 = st.columns(5)
             st.markdown('**Review**')
             st.markdown(review['Details'])
+
+            # try transform from str to float '1.0' -> 1.0
+            review['New_Overall_Rating'] = float(review['New_Overall_Rating'])
+            review['New_Food_Rating'] = float(review['New_Food_Rating'])
+            review['New_Drink_Rating'] = float(review['New_Drink_Rating'])
+            review['New_Service_Rating'] = float(review['New_Service_Rating'])
+            review['New_Ambience_Rating'] = float(review['New_Ambience_Rating'])
+            
 
             with c1:
                 overall = sac.rate(
@@ -514,7 +704,9 @@ def main():
                'Dishoom Kensington': 6,
                'Dishoom Manchester': 7,
                'Dishoom Birmingham': 8,
-               'Dishoom Canary Wharf': 9
+               'Dishoom Canary Wharf': 9,
+               'Dishoom Battersea': 10,
+               'Permit Room Brighton': 11
             }
 
             # get the id from the name
@@ -753,7 +945,7 @@ def main():
 
     menu = create_sidebar_menu()
     if menu == 'Upload':
-        adding_data()
+        adding_data_from_google_sheet_all_option()
 
     elif menu == 'Scoring':
         edit_data()

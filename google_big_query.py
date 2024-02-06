@@ -232,7 +232,7 @@ class TransformationGoogleBigQuery:
     
 from streamlit_gsheets import GSheetsConnection
 
-def get_direct_feedback(venue, start_date, end_date):
+def get_direct_feedback_(venue, start_date, end_date):
     '''
     This function returns the direct feedback from the google sheet
     It requires the venue, the start date and the end date
@@ -245,6 +245,28 @@ def get_direct_feedback(venue, start_date, end_date):
     df['DATE RECEIVED'] = pd.to_datetime(df['DATE RECEIVED'])
     df = df[(df['DATE RECEIVED'] >= start_date) & (df['DATE RECEIVED'] <= end_date)]
     df['DATE RECEIVED'] = df['DATE RECEIVED'].dt.strftime('%d/%m/%Y')
+    return df
+
+def get_direct_feedback():
+    '''
+    This function returns the direct feedback from the google sheet
+    It requires the venue, the start date and the end date
+
+    library: st-gsheets-connection
+    '''
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    df = conn.read()
+    return df
+
+def get_google_sheet_data(name = "all"):
+    '''
+    This function returns the feedback from the google sheet (MasterFeedbacks)
+    It requires the venue, the start date and the end date
+
+    library: st-gsheets-connection
+    '''
+    conn = st.connection(name, type=GSheetsConnection)
+    df = conn.read()
     return df
 
 def get_google_reviews(venue, start_date, end_date):

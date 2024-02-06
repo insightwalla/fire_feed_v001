@@ -54,6 +54,43 @@ def prepare_data(data):
             lambda x: 0 if x == '' else x)
     return data
 
+def prepare_data_from_gsheets(data):
+    # same as the other one
+    data = data.rename(columns={'venue': 'Reservation: Venue'})
+    # in the venue column if we have ' then we need to remove it
+    try:
+        data['Reservation: Venue'] = data['Reservation: Venue'].apply(lambda x: x.replace("'", ""))
+    except:
+        pass
+    data = data.rename(columns={'reservation_date': 'Reservation: Date'})
+    data['Date Submitted'] = data['Reservation: Date']
+    data['Reservation: Time'] = ''
+    data = data.rename(columns={'ambience': 'Feedback: Ambience Rating'})
+    data = data.rename(columns={'service': 'Feedback: Service Rating'})
+    data = data.rename(columns={'food': 'Feedback: Food Rating'})
+    data = data.rename(columns={'drinks': 'Feedback: Drink Rating'})
+    data = data.rename(columns={'overall': 'Overall Rating'})
+    data['Reservation: Overall Rating'] = data['Overall Rating']
+    data['Reservation: Food Rating'] = data['Feedback: Food Rating']
+    data['Reservation: Drinks Rating'] = data['Feedback: Drink Rating']
+    data['Reservation: Service Rating'] = data['Feedback: Service Rating']
+    data['Reservation: Ambience Rating'] = data['Feedback: Ambience Rating']
+    data['Reservation: Feedback Notes'] = ''
+    data['Title'] = ''
+    data['Feedback: Recommend to Friend'] = data['Feedback: Recommend to Friend'].apply(
+        lambda x: 'Yes' if x == 'True' else 'No')
+    data['Reservation: Updated Date'] = ''
+    data = data.rename(columns={'notes': 'Details'})
+    #data['Platform'] = 'Google Sheets'
+    data = data.fillna('')
+    if 'Feedback: Drink Rating' in data.columns.tolist():
+        data['Feedback: Drink Rating'] = data['Feedback: Drink Rating'].apply(
+            lambda x: str(x).replace('"', ''))
+        # if empty then 0
+        data['Feedback: Drink Rating'] = data['Feedback: Drink Rating'].apply(
+            lambda x: 0 if x == '' else x)
+    return data
+
 def process_direct_f(df_direct):
     '''
     They only contain 5 columns
