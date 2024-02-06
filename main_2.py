@@ -104,7 +104,7 @@ def modify_entry(collection: str, idx: str, data: dict):
     '''
     params:
         collection: name of the collection
-        agent_id: id of the agent
+        idx: id of the feedback
         data: dictionary with data
 
     returns:
@@ -117,7 +117,37 @@ def modify_entry(collection: str, idx: str, data: dict):
     '''
     docs = db.collection(collection).stream()
     doc = [doc for doc in docs if doc.to_dict()['idx'] == idx][0]
+    old_data = doc.to_dict()
     doc.reference.update(data)
+    new_data = db.collection(collection).document(doc.id).get().to_dict()
+    # get hte 
+    # return old and new data
+    return old_data, new_data
+
+def modify_from_details_and_venue(collection: str, details: str, venue: str, data: dict):
+    '''
+    params:
+        collection: name of the collection
+        details: details of the feedback
+        venue: name of the venue
+        data: dictionary with data
+
+    returns:
+        None
+
+    ---
+    
+    Assuming a granted connection to the database, this function modifies an entry in a collection.
+
+    '''
+    docs = db.collection(collection).stream()
+    doc = [doc for doc in docs if doc.to_dict()['Details'] == details and doc.to_dict()['Reservation_Venue'] == venue][0]
+    old_data = doc.to_dict()
+    doc.reference.update(data)
+    new_data = db.collection(collection).document(doc.id).get().to_dict()
+    # get hte 
+    # return old and new data
+    return old_data, new_data
 
 def clear_agent_from_name(collection: str, name: str):
     '''
@@ -379,9 +409,12 @@ def main():
                             data_for_venue = data_for_venue[data_for_venue['Reservation: Venue'] == venue]
                             # append to the data
                             df = pd.concat([df, data_for_venue], axis=0)
+                            # need to reset the index
+                            #df = df.reset_index(drop=True)
                         st.session_state[venue] = df
                         # write in tab
                         with tabs[i]:
+                            st.write(f'{venue} : {len(df)} reviews')
                             st.write(st.session_state[venue])
 
 
@@ -401,6 +434,7 @@ def main():
                 
                 if venue == 'All':
                     # for each venue
+                    final_df = pd.DataFrame()
                     for v in venues[1:]:
                         # select the data for that venue
                         df = st.session_state[v]
@@ -418,9 +452,12 @@ def main():
                             with st.spinner('Clearing data...'):
                                 clear_collection_venue(collection_name, v)
 
+                        # add to the final df
+                        final_df = pd.concat([final_df, df], axis=0)
+
                         with st.spinner('Adding data...'):
                             # get totla number of rows
-                            len_df = len(df)
+                            len_df = len(final_df)
                             my_small_bar = st.progress(0, text=f'Uploading 0/{len_df}')
                             for i, row in df.iterrows():
                                 add_data(collection_name, row.to_dict())
@@ -545,6 +582,7 @@ def main():
                 st.write(e)
 
         map_id = {i: doc['idx'] for i, doc in enumerate(data)}
+        id_map = {doc['idx']: i for i, doc in enumerate(data)}
         # initialise the review id
         if 'review_id' not in st.session_state:
             st.session_state.review_id = 1
@@ -553,6 +591,7 @@ def main():
         map_id = {i: doc['idx'] for i, doc in enumerate(data)}
         review_id = get_review_id(c2, data, map_id)
         review = get_review_data(data, review_id)
+        st.write(review)
         #st.write(review)
         edit_tab, venue_tab = st.tabs(['Edit', 'Venue Details'])
         with edit_tab.form(key='my_editing_form', clear_on_submit=False):
@@ -674,19 +713,22 @@ def main():
                     '👎': '1' if is_worst else '0',
                     '💡': '1' if is_suggestion else '0',
                     }
-
             if space_for_update_button.form_submit_button(
-                            label = 'Edit',
+                            label = f'Edit {review_id} - {venue} : {collection_name}',
                             type = 'primary',
                             use_container_width=True
                             ):
-
-                with st.spinner('Updating'):
-                    modify_entry(collection_name, review_id, data)
+                with st.spinner(f'Updating {review_id} - {collection_name}'):
+                    # map review_id to idx
+                    #old_value, new_v = modify_entry(collection_name, review_id, data)
+                    old_value, new_v = modify_from_details_and_venue(collection_name, review['Details'], venue, data)
+                    with st.expander(f'Old Value {old_value["Details"] if old_value["Details"] != "" else "nan"}'):
+                        for k, v in old_value.items():
+                            st.write(f'{k} : {v}')
+                    with st.expander(f'New Value {new_v["Details"] if new_v["Details"] != "" else "nan"}'):
+                        for k, v in new_v.items():
+                            st.write(f'{k} : {v}')
                 st.toast('Data edited', icon='✅')
-
-                # check if you still need labels
-                # get how many non labelled and negative
                 df_to_label = df_full[df_full['Label_Dishoom'] == '']
                 df_to_label = df_to_label[df_to_label['Sentiment'] == 'NEGATIVE']
                 if len(df_to_label) == 0 and only_to_label:
@@ -694,6 +736,7 @@ def main():
                     st.stop()
                 else:
                     pass
+
         with venue_tab:
             venue_map = {
                'Dishoom Covent Garden': 1,
@@ -713,7 +756,7 @@ def main():
             store_id = venue_map[venue]
             date = review['Reservation_Date']
             time = review['Reservation_Time']
-            get_sales_date(store_id= [store_id], date = date, time = time)
+            #get_sales_date(store_id= [store_id], date = date, time = time)
             st.stop()
 
     def clear_data():
