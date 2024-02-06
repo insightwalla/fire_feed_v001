@@ -422,7 +422,16 @@ def main():
 
                     # now add the data from direct feedback to venue filtering from the venue
                 else:
+                    df_dir = get_direct_feedback()
+                    df_dir = process_direct_f(df_dir)
                     df = data[data['Reservation: Venue'] == venue]
+                    st.session_state['Direct Feedback'] = df_dir
+                    # need to put together the data
+                    df_dir_for_venue = df_dir[df_dir['Reservation: Venue'] == venue]
+                    if len(df_dir_for_venue) > 0:
+                        # combine the data
+                        df = pd.concat([df, df_dir_for_venue], axis=0)
+
                     df = prepare_data_from_gsheets(df)
                     df = preprocess_single_df(df)
                     st.session_state[venue] = df
@@ -468,6 +477,7 @@ def main():
                     st.balloons()
 
                 else:
+                    v = venue
                     df = st.session_state[v]
                     df['idx'] = list(range(len(df)))
                     df = process_data(df)
