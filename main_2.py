@@ -603,7 +603,7 @@ def main():
         map_id = {i: doc['idx'] for i, doc in enumerate(data)}
         review_id = get_review_id(c2, data, map_id)
         review = get_review_data(data, review_id)
-        st.write(review)
+        #st.write(review)
         #st.write(review)
         edit_tab, venue_tab = st.tabs(['Edit', 'Venue Details'])
         with edit_tab.form(key='my_editing_form', clear_on_submit=False):
