@@ -833,7 +833,7 @@ def main():
         venue_data = data[data['Reservation_Venue'] == venue]
         venue_data_to_lab = venue_data[venue_data['Details'] != '']
         venue_data_to_lab = venue_data_to_lab[venue_data_to_lab['Details'] != 'nan']
-        return venue_data_to_lab
+        return venue_data_to_lab, venue_data
 
     def get_totals(venue_data_to_lab, venue_data):
         negative_to_lab = venue_data_to_lab[venue_data_to_lab['Sentiment'] == 'NEGATIVE']
@@ -868,8 +868,8 @@ def main():
         # get unique venues
         list_of_venue = data['Reservation_Venue'].unique()
         for _, venue in enumerate(list_of_venue):
-            venue_data_to_lab = get_venue_data(data, venue)
-            tot_, tot_done, tot_not_done, thumbs_up, thumbs_down, suggestions, number_of_thumbs_up, number_of_thumbs_down = get_totals(venue_data_to_lab, data)
+            venue_data_to_lab, venue_data = get_venue_data(data, venue)
+            tot_, tot_done, tot_not_done, thumbs_up, thumbs_down, suggestions, number_of_thumbs_up, number_of_thumbs_down = get_totals(venue_data_to_lab, venue_data)
 
             # get suggestions
             suggestions = venue_data_to_lab[venue_data_to_lab['💡'] == '1']
