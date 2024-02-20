@@ -16,3 +16,4 @@ db-dtypes
 sentence-transformers
 st-gsheets-connection
 pydantic
+"langchain[docarray]"
