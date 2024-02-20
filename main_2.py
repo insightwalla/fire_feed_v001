@@ -726,7 +726,8 @@ def main():
                     '💡': '1' if is_suggestion else '0',
                     }
             if space_for_update_button.form_submit_button(
-                            label = f'Edit {review_id} - {venue} : {collection_name}',
+                            #label = f'Edit {review_id} - {venue} : {collection_name}',
+                            label = 'Save'
                             type = 'primary',
                             use_container_width=True
                             ):
