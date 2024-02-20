@@ -1013,8 +1013,8 @@ def main():
 
     elif menu == 'AI Assistant':
         # get data
-        st.info('OpenAI release a new version of their API last week - Need some time to change the logic!')
-        st.stop()
+        #st.info('OpenAI release a new version of their API last week - Need some time to change the logic!')
+        #st.stop()
         data = get_data(collection_name, as_dict=True)
         if len(data) == 0:
             st.info('Upload some data first!')
