@@ -17,3 +17,4 @@ sentence-transformers
 st-gsheets-connection
 pydantic
 docarray
+langchain-community
