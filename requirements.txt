@@ -15,3 +15,4 @@ firebase_admin
 db-dtypes
 sentence-transformers
 st-gsheets-connection
+pydantic
