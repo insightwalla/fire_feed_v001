@@ -15,6 +15,6 @@ firebase_admin
 db-dtypes
 sentence-transformers
 st-gsheets-connection
-pydantic
+pydantic==1.10.9
 docarray
 langchain-community
