@@ -5,7 +5,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.vectorstores import DocArrayInMemorySearch
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-def ai_template(data):
+def ai_template_(data):
     import streamlit as st
     from langchain.callbacks.base import BaseCallbackHandler
 
