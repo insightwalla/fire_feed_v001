@@ -553,11 +553,31 @@ def main():
         c1,c2 = st.columns(2)
         venue = c1.selectbox('Select venue', list(set([doc['Reservation_Venue'] for doc in data])))
         data = filter_data_by_venue(data, venue)
+        # calculate percentage of completion
+
         # as a dataframe
         df_full_ = pd.DataFrame(data)
         best_rev = df_full_[df_full_['👍'] == '1']
         worst_rev = df_full_[df_full_['👎'] == '1']
         suggestions_rev = df_full_[df_full_['💡'] == '1']
+
+        # get all negative (100%)
+        all_neg = df_full_[df_full_['Sentiment'] == 'NEGATIVE']
+        total_best_and_worst = 6
+        all_neg_not_labelled = all_neg[all_neg['Label_Dishoom'] == '']
+        all_neg_labelled = all_neg[all_neg['Label_Dishoom'] != '']
+        total = len(all_neg) + total_best_and_worst 
+        total_done = len(all_neg_labelled) +  len(best_rev) + len(worst_rev)
+        not_done = total - total_done
+
+        # Create the pie chart
+        fig = go.Figure(data=[go.Pie(labels=['Total Done', 'Not Done'],
+                                    values=[total_done, not_done],
+                                    pull=[0, 0.1],  # Pulls the 'Not Done' slice out for emphasis
+                                    marker_colors=['#66b3ff', '#ff9999'])])
+
+        # Update chart layouts (optional)
+        fig.update_layout(width=300, height=300, showlegend=False, title_text = 'Completion Pie')
 
         if len(data) == 0:
             st.info('No data available, need to upload some reviews!')
@@ -607,8 +627,13 @@ def main():
         #st.write(review)
         edit_tab, venue_tab = st.tabs(['Edit', 'Venue Details'])
         with edit_tab.form(key='my_editing_form', clear_on_submit=False):
-            _, space_for_update_button = st.columns([0.7,0.3])
+            _, space_for_update_button = st.columns([0.5,0.5])
             # get all the informations
+
+            if not_done != 0:
+                st.sidebar.write(fig)
+            else:
+                st.balloons()
 
 
             is_this_best = review['👍'] == '1'
