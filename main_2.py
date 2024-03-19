@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import streamlit as st
 import base64
+import time
 import streamlit_antd_components as sac
 from google_big_query import get_direct_feedback, get_google_sheet_data
 from templates.ai_mod import ai_template
@@ -70,6 +71,36 @@ def get_data(collection: str, as_dict=False):
         docs = [doc.to_dict() for doc in docs]
     return docs
 
+def get_all_venues_name_old(collection : str):
+    start = time.time()
+    docs = db.collection(collection).stream()
+    docs = [doc.to_dict() for doc in docs]
+    st.write(f'time taken: {time.time() - start}')
+    return list(set([doc['Reservation_Venue'] for doc in docs]))
+
+def get_all_venues_name_new(collection: str):
+    """
+    Retrieves all unique 'Reservation_Venue' names from a Firestore collection.
+
+    Args:
+        collection (str): Name of the Firestore collection.
+
+    Returns:
+        list: A list containing unique names of venues.
+
+    Example usage:
+        unique_venue_names = get_all_venues_name('reservations')
+    """
+    start = time.time()
+    # Stream the documents in the collection
+    docs = db.collection(collection).stream()
+    
+    # Create a set to store unique venue names
+    venues_set = {doc.get('Reservation_Venue') for doc in docs if doc.get('Reservation_Venue')}
+    st.write(f'time taken: {time.time() - start}')
+
+    return list(venues_set)
+
 def clear_all_collection(collection: str):
     '''
     params:
@@ -124,7 +155,7 @@ def modify_entry(collection: str, idx: str, data: dict):
     # return old and new data
     return old_data, new_data
 
-def modify_from_details_and_venue(collection: str, details: str, venue: str, data: dict):
+def modify_from_details_and_venue_(collection: str, details: str, venue: str, data: dict):
     '''
     params:
         collection: name of the collection
@@ -140,6 +171,7 @@ def modify_from_details_and_venue(collection: str, details: str, venue: str, dat
     Assuming a granted connection to the database, this function modifies an entry in a collection.
 
     '''
+    start = time.time()
     docs = db.collection(collection).stream()
     doc = [doc for doc in docs if doc.to_dict()['Details'] == details and doc.to_dict()['Reservation_Venue'] == venue][0]
     old_data = doc.to_dict()
@@ -147,6 +179,55 @@ def modify_from_details_and_venue(collection: str, details: str, venue: str, dat
     new_data = db.collection(collection).document(doc.id).get().to_dict()
     # get hte 
     # return old and new data
+    end = time.time()
+    st.write(f'time taken: {end - start} sec')
+    return old_data, new_data
+
+def modify_from_details_and_venue(collection: str, details: str, venue: str, data: dict):
+    """
+    NEW OPTIMISED FUNCTION
+    Modifies an entry in a Firestore collection that matches the given details and venue by updating it with the provided data.
+
+    Args:
+        collection (str): Name of the Firestore collection.
+        details (str): Details of the document to be modified.
+        venue (str): Venue name associated with the document.
+        data (dict): Dictionary containing new data for the document.
+
+    Returns:
+        tuple: A tuple containing dictionaries of old and new data from the document.
+
+    Raises:
+        ValueError: If no document matches the provided details and venue, or if multiple documents are found.
+
+    Example usage:
+        old_data, new_data = modify_from_details_and_venue('feedback', 'Specific feedback details', 'Venue name', {'rating': 5})
+    """
+    start = time.time()
+    # Query the database for the document with matching 'Details' and 'Reservation_Venue'
+    query = db.collection(collection).where('Details', '==', details).where('Reservation_Venue', '==', venue)
+    
+    # Execute the query and get the documents
+    docs = list(query.stream())
+
+    if not docs:
+        raise ValueError(f"No document with details '{details}' and venue '{venue}' exists in collection '{collection}'.")
+    
+    if len(docs) > 1:
+        raise ValueError(f"Multiple documents with details '{details}' and venue '{venue}' found in collection '{collection}'. Expected only one.")
+
+    # Get the first match (there should only be one due to the error check above)
+    doc = docs[0]
+    # Retrieve the original document data
+    old_data = doc.to_dict()
+
+    # Update the document with the new data
+    doc.reference.update(data)
+
+    # Retrieve the updated document data
+    new_data = doc.reference.get().to_dict()
+    end = time.time()
+    st.write(f'time taken: {end-start}')
     return old_data, new_data
 
 def clear_agent_from_name(collection: str, name: str):
@@ -757,8 +838,6 @@ def main():
                             use_container_width=True
                             ):
                 with st.spinner(f'Updating {review_id} - {collection_name}'):
-                    # map review_id to idx
-                    #old_value, new_v = modify_entry(collection_name, review_id, data)
                     old_value, new_v = modify_from_details_and_venue(collection_name, review['Details'], venue, data)
                     with st.expander(f'Old Value {old_value["Details"] if old_value["Details"] != "" else "nan"}'):
                         for k, v in old_value.items():
@@ -1061,3 +1140,4 @@ def main():
 if __name__ == '__main__':
     from login_light import login
     login(render_func=main)
+    
